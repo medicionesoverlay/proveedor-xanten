@@ -465,19 +465,43 @@
 			.onSnapshot((snap) => {
 				snap.docChanges().forEach((chg) => {
 					const data = chg.doc.data() || {};
-					const id = chg.doc.id; // proveedor::activo
+					const docId = chg.doc.id; // proveedor::activo
+					// Intentar mapear el documento al item local de forma robusta
+					let localId = null;
+					// 1) Coincidencia exacta por docId
+					if (states.has(docId) || items.find(x => x.id === docId)) {
+						localId = docId;
+					} else {
+						// 2) Buscar por campo activo (normalizado)
+						const activoRemote = String(data.activo || '').trim().toLowerCase().replace(/\s+/g,' ');
+						const found = items.find(x => String(x.activo || '').trim().toLowerCase().replace(/\s+/g,' ') === activoRemote);
+						if (found) localId = found.id;
+						else {
+							// 3) Buscar por sufijo del id (por si el proveedor part difiere)
+							const suf = '::' + String(data.activo || '').trim();
+							const found2 = items.find(x => x.id && x.id.endsWith(suf));
+							if (found2) localId = found2.id;
+						}
+					}
+
+					if (!localId) {
+						console.warn('Firestore change for unknown item (fallback failed):', docId, data.activo);
+						return;
+					}
+
 					if (chg.type === 'removed') {
-						states.delete(id);
+						states.delete(localId);
 						render();
 						return;
 					}
-					const curr = states.get(id) || { estado: 'pendiente', files: [], remoteUrls: [] };
+
+					const curr = states.get(localId) || { estado: 'pendiente', files: [], remoteUrls: [] };
 					curr.estado = data.estado || curr.estado;
 					if (data.fotos_uris) {
 						const urls = Array.isArray(data.fotos_uris) ? data.fotos_uris : String(data.fotos_uris).split(';').filter(Boolean);
 						curr.remoteUrls = urls;
 					}
-					states.set(id, curr);
+					states.set(localId, curr);
 					render();
 				});
 			});
@@ -1296,57 +1320,70 @@
 	// Listener para real-time de Firestore
 	let unsubscribe = null;
 	function subscribeRealtime() {
-		if (!authReady) { 
-			setTimeout(subscribeRealtime, 500); 
-			return; 
+		if (!authReady) {
+			setTimeout(subscribeRealtime, 500);
+			return;
 		}
-		
+
 		// Cancelar listener anterior si existe
 		if (unsubscribe) {
 			try { unsubscribe(); } catch (e) { console.warn('Error cancelando listener', e); }
 		}
-		
+
 		console.log('🔔 Iniciando listener de Firestore para:', PROVIDER_KEY);
-		
+
 		try {
 			unsubscribe = fbDb.collection('mediciones')
 				.where('proveedor', '==', PROVIDER_KEY)
-				.limit(100) // Limitar a 100 documentos para evitar sobrecarga
 				.onSnapshot(
-					{ includeMetadataChanges: false }, // Solo cambios reales, no metadata
+					{ includeMetadataChanges: false },
 					snap => {
 						console.log(`🔄 Cambios recibidos: ${snap.docChanges().length}`);
 						snap.docChanges().forEach(change => {
 							const doc = change.doc;
-							const data = doc.data();
-							const itemId = data.activo;
-							const item = items.find(x => x.activo === itemId);
-							if (!item) return;
-							
-							const st = states.get(item.id) || {};
-							
+							const data = doc.data() || {};
+							const docId = doc.id; // formato: proveedor::activo
+							// Búsqueda robusta del item local
+							let localId = null;
+							if (states.has(docId) || items.find(x => x.id === docId)) {
+								localId = docId;
+							} else {
+								const activoRemote = String(data.activo || '').trim().toLowerCase().replace(/\s+/g,' ');
+								const found = items.find(x => String(x.activo || '').trim().toLowerCase().replace(/\s+/g,' ') === activoRemote);
+								if (found) localId = found.id;
+								else {
+									const suf = '::' + String(data.activo || '').trim();
+									const found2 = items.find(x => x.id && x.id.endsWith(suf));
+									if (found2) localId = found2.id;
+								}
+							}
+							if (!localId) {
+								console.warn('Firestore change for unknown item (fallback failed):', docId, data.activo);
+								return;
+							}
+
+							const st = states.get(localId) || { estado: 'pendiente', files: [], notes: [], gps: [], validations: {}, remoteUrls: [] };
+
 							if (change.type === 'removed') {
-								st.estado = 'pendiente';
-								st.files = [];
-								st.notes = [];
-								st.gps = [];
-								st.validations = {};
+								states.delete(localId);
+								return;
+							}
+
+							st.estado = data.estado || st.estado;
+							if (data.fotos_uris) {
+								const urls = Array.isArray(data.fotos_uris) ? data.fotos_uris : String(data.fotos_uris).split(';').filter(Boolean);
+								st.remoteUrls = urls;
+							}
+
+							if (data.estado === 'pendiente' && data.observacion_rechazo) {
+								st.observacion_rechazo = data.observacion_rechazo;
+								st.fecha_rechazo = data.fecha_rechazo;
+							} else if (data.estado === 'medido' || data.estado === 'pendiente_revision') {
 								delete st.observacion_rechazo;
 								delete st.fecha_rechazo;
-								states.set(item.id, st);
-							} else if (data.estado !== st.estado) {
-								st.estado = data.estado || 'pendiente';
-								
-								if (data.estado === 'pendiente' && data.observacion_rechazo) {
-									st.observacion_rechazo = data.observacion_rechazo;
-									st.fecha_rechazo = data.fecha_rechazo;
-								} else if (data.estado === 'medido' || data.estado === 'pendiente_revision') {
-									delete st.observacion_rechazo;
-									delete st.fecha_rechazo;
-								}
-								
-								states.set(item.id, st);
 							}
+
+							states.set(localId, st);
 						});
 						safeRender();
 						lastUpdate.textContent = formatDate(getCurrentTimestamp());
@@ -1355,7 +1392,6 @@
 						console.error('❌ Error en listener de Firestore:', err);
 						connectionStatus.textContent = '🔴 Error de conexión';
 						showError('Error de conexión con Firebase. Recargando...');
-						// Reintentar después de 5 segundos
 						setTimeout(() => {
 							if (navigator.onLine) {
 								window.location.reload();
