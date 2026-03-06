@@ -51,7 +51,6 @@
 			background: var(--accent); color: #ffffff; border: none; border-radius: 8px; 
 			padding: 8px 12px; cursor: pointer; font-weight: 600; font-size: 14px;
 		}
-		button:disabled { opacity: 0.6; cursor: not-allowed; }
 		label.btn.attach { display: inline-flex; align-items: center; gap: 6px; }
 		button.secondary { background: #3d3d3d; color: var(--text); }
 		button.danger { background: var(--danger); color: #ffffff; }
@@ -103,6 +102,39 @@
 		.gps-info { background: #2d2d2d; padding: 8px; border-radius: 6px; margin: 8px 0; font-size: 12px; }
 		.gps-coords { color: var(--accent); font-family: monospace; }
 		
+		/* Validaciones */
+		.validation-status { display: flex; align-items: center; gap: 8px; margin: 8px 0; }
+		.validation-item { display: flex; align-items: center; gap: 4px; font-size: 12px; }
+		.validation-ok { color: var(--success); }
+		.validation-warning { color: var(--warning); }
+		.validation-error { color: var(--danger); }
+		
+		/* Notas y comentarios */
+		.notes-section { margin: 12px 0; }
+		.note-item { 
+			background: #2d2d2d; padding: 8px; border-radius: 6px; margin: 4px 0; 
+			border-left: 3px solid var(--accent); 
+		}
+		.note-timestamp { color: var(--muted); font-size: 11px; }
+		
+		/* Auditoría */
+		.audit-log { 
+			background: #0a0a0a; padding: 8px; border-radius: 6px; margin: 8px 0; 
+			font-size: 11px; color: var(--muted); max-height: 100px; overflow-y: auto;
+		}
+		
+		/* Modales */
+		.modal { 
+			display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+			background: rgba(0,0,0,0.8); z-index: 1000; 
+		}
+		.modal-content { 
+			position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+			background: var(--card); border-radius: 10px; padding: 20px; max-width: 500px; width: 90%;
+		}
+		.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+		.modal-close { background: none; border: none; color: var(--muted); font-size: 24px; cursor: pointer; }
+		
 		/* Responsive */
 		@media (max-width: 900px) { 
 			.toolbar { grid-template-columns: 1fr; }
@@ -121,10 +153,44 @@
 			.thumb-grid { grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); }
 		}
 		
+		/* Utilidades */
 		.hidden { display: none !important; }
+		.text-center { text-align: center; }
+		.text-muted { color: var(--muted); }
 		.small { font-size: 12px; }
 		.footer { margin-top: 18px; color: var(--muted); font-size: 12px; }
 		.error-banner { background:#2d0a0a; color:#ffcccc; border:1px solid #5a1515; padding:8px; border-radius:8px; margin-bottom:10px; }
+		
+		/* Tags/Etiquetas */
+		.tag { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 11px; margin: 2px; font-weight: 600; }
+		.tag-urgente { background: var(--danger); color: #fff; }
+		.tag-revisar { background: var(--warning); color: #000; }
+		.tag-completo { background: var(--success); color: #fff; }
+		.tag-selector { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+		
+		/* Comparador de fotos */
+		.photo-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 12px 0; }
+		.photo-compare img { width: 100%; border-radius: 8px; cursor: zoom-in; }
+		.photo-compare.zoomed img { cursor: zoom-out; transform: scale(1.5); transition: transform 0.3s; }
+		
+		/* Offline Queue */
+		.offline-queue { background: #2d2d2d; border-left: 4px solid var(--warning); padding: 12px; border-radius: 6px; margin: 12px 0; }
+		.offline-queue-item { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #444; }
+		.offline-queue-item:last-child { border-bottom: none; }
+		.sync-status { font-size: 11px; color: var(--warning); }
+		
+		/* Modo Tablet - Botones más grandes */
+		@media (min-width: 768px) and (max-width: 1024px) and (orientation: portrait),
+		       (min-width: 1024px) and (max-width: 1366px) and (orientation: landscape) {
+			body { font-size: 16px; }
+			button, label.btn { padding: 14px 20px; font-size: 16px; min-height: 48px; }
+			input[type=search], input[type=text], select, input[type=date], textarea { 
+				padding: 14px; font-size: 16px; min-height: 48px; 
+			}
+			.thumb { height: 120px; }
+			.stat-card { padding: 20px; }
+			.stat-number { font-size: 32px; }
+		}
 	</style>
 </head>
 <body>
@@ -135,15 +201,35 @@
 		</a>
 	</div>
 	
+	<!-- Dashboard de estadísticas -->
 	<div class="dashboard">
-		<div class="stat-card"><div class="stat-label">Total Activos</div><div class="stat-number stat-total" id="statTotal">0</div></div>
-		<div class="stat-card"><div class="stat-label">Pendientes</div><div class="stat-number stat-pendiente" id="statPendientes">0</div></div>
-		<div class="stat-card"><div class="stat-label">Medidos</div><div class="stat-number stat-medido" id="statMedidos">0</div></div>
-		<div class="stat-card"><div class="stat-label">Rechazados</div><div class="stat-number" style="color:var(--danger);" id="statRechazados">0</div></div>
-		<div class="stat-card"><div class="stat-label">% Aprobación</div><div class="stat-number" style="color:var(--success);" id="statAprobacion">0%</div></div>
-		<div class="stat-card"><div class="stat-label">Progreso</div><div class="stat-number" id="statProgreso">0%</div></div>
+		<div class="stat-card">
+			<div class="stat-label">Total Activos</div>
+			<div class="stat-number stat-total" id="statTotal">0</div>
+		</div>
+		<div class="stat-card">
+			<div class="stat-label">Pendientes</div>
+			<div class="stat-number stat-pendiente" id="statPendientes">0</div>
+		</div>
+		<div class="stat-card">
+			<div class="stat-label">Medidos</div>
+			<div class="stat-number stat-medido" id="statMedidos">0</div>
+		</div>
+		<div class="stat-card">
+			<div class="stat-label">Rechazados</div>
+			<div class="stat-number" style="color:var(--danger);" id="statRechazados">0</div>
+		</div>
+		<div class="stat-card">
+			<div class="stat-label">% Aprobación</div>
+			<div class="stat-number" style="color:var(--success);" id="statAprobacion">0%</div>
+		</div>
+		<div class="stat-card">
+			<div class="stat-label">Progreso</div>
+			<div class="stat-number" id="statProgreso">0%</div>
+		</div>
 	</div>
 	
+	<!-- Toolbar principal -->
 	<div class="toolbar">
 		<div class="search-group">
 			<input id="q" type="search" placeholder="Buscar por Activo, clasificación, notas..." />
@@ -159,16 +245,57 @@
 		<button id="exportBtn" class="success">Exportar CSV</button>
 	</div>
 	
-	<div class="toolbar-advanced" style="display:none;">
-		<div><label>Fecha desde:</label><input id="dateFrom" type="date" /></div>
-		<div><label>Fecha hasta:</label><input id="dateTo" type="date" /></div>
+	<!-- Toolbar avanzado -->
+	<div class="toolbar-advanced">
+		<div>
+			<label>Fecha desde:</label>
+			<input id="dateFrom" type="date" />
+		</div>
+		<div>
+			<label>Fecha hasta:</label>
+			<input id="dateTo" type="date" />
+		</div>
 	</div>
 	
+	<!-- Lista de activos -->
 	<div id="errorBanner" class="error-banner hidden"></div>
 	<div class="panel">
 		<h2>Listado de Activos</h2>
 		<div id="list" class="list"></div>
 		<div id="emptyMsg" class="text-muted small" style="margin-top:8px;"></div>
+	</div>
+	
+	<!-- Modal para notas -->
+	<div id="notesModal" class="modal">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h3>Agregar Nota</h3>
+				<button class="modal-close" onclick="closeModal('notesModal')">&times;</button>
+			</div>
+			<div class="form-group">
+				<label>Tipo de nota:</label>
+				<select id="noteType">
+					<option value="observacion">Observación</option>
+					<option value="problema">Problema</option>
+					<option value="comentario">Comentario</option>
+					<option value="estado">Estado</option>
+				</select>
+			</div>
+			<div class="form-group">
+				<label>Comentario:</label>
+				<textarea id="noteText" placeholder="Describe la observación, problema o comentario..."></textarea>
+			</div>
+			<div style="display: flex; gap: 8px; justify-content: flex-end;">
+				<button onclick="closeModal('notesModal')" class="secondary">Cancelar</button>
+				<button onclick="saveNote()" class="success">Guardar</button>
+			</div>
+		</div>
+	</div>
+	
+	<!-- Queue offline (se muestra solo cuando hay elementos pendientes) -->
+	<div id="offlineQueue" class="offline-queue" style="display:none;">
+		<strong>⚠️ Operaciones pendientes de sincronizar:</strong>
+		<div id="queueList"></div>
 	</div>
 	
 	<div class="footer">
@@ -177,11 +304,13 @@
 		Última actualización: <span id="lastUpdate">-</span>
 	</div>
 
+	<!-- Firebase SDKs (compat) -->
 	<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
 	<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
 	<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
 
 	<script>
+	// Inicializar Firebase (solo Firestore/Auth anónima)
 	const FIREBASE_CONFIG = {
 		apiKey: "AIzaSyCh8gYPHnQeYC3_SPV8QNctWVFAqYLMQeU",
 		authDomain: "medicionesodn.firebaseapp.com",
@@ -189,56 +318,130 @@
 		appId: "1:650664889209:web:193469c06809de2f653da8",
 		measurementId: "G-SSWYNBTZ43"
 	};
-	try { firebase.initializeApp(FIREBASE_CONFIG); } catch (e) {}
+	try { firebase.initializeApp(FIREBASE_CONFIG); } catch (e) { /* ignore re-init */ }
 	const fbAuth = firebase.auth();
 	const fbDb = firebase.firestore();
 	
-	fbDb.settings({ cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED, merge: true });
-	fbDb.enablePersistence({ synchronizeTabs: true }).catch(err => console.warn('Persistencia no disponible:', err.code));
+	// Configurar timeouts y persistencia
+	fbDb.settings({
+		cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED,
+		merge: true
+	});
+	fbDb.enablePersistence({ synchronizeTabs: true }).catch(err => {
+		console.warn('Persistencia no disponible:', err.code);
+	});
 	
 	let authReady = false;
-	fbAuth.onAuthStateChanged(user => { if (user) authReady = true; });
-	fbAuth.signInAnonymously().catch(err => console.error('Error en auth:', err));
+	let authTimeout = null;
+	
+	fbAuth.onAuthStateChanged(user => {
+		if (user) { 
+			authReady = true; 
+			if (authTimeout) clearTimeout(authTimeout);
+			console.log('✅ Firebase Auth listo');
+		}
+	});
+	
+	// Auth con timeout de 10 segundos
+	fbAuth.signInAnonymously().catch(err => {
+		console.error('❌ Error en auth:', err);
+		showError('Error de autenticación. Recarga la página.');
+	});
+	
+	authTimeout = setTimeout(() => {
+		if (!authReady) {
+			console.warn('⚠️ Auth tardando más de lo esperado');
+			showError('Conexión lenta. Verifica tu internet.');
+		}
+	}, 10000);
 
+	async function appendPhotoToFirestore(proveedor, activo, url, meta, gps) {
+		// NO guardar en Firestore aún, solo cuando se envíe a revisión
+		// Esta función queda como placeholder para logging si es necesario
+		console.log('Foto agregada localmente:', url);
+	}
+
+	// Validar formato de medición: NAP (-3.50 a 5.00) o CDO (-23.50 a 5.00) con 2 decimales
 	function validarMedicion(valor, clasificacion = '') {
-		if (!valor || valor.trim() === '') return { valido: false, mensaje: 'Debe ingresar un valor de medición' };
+		if (!valor || valor.trim() === '') {
+			return { valido: false, mensaje: 'Debe ingresar un valor de medición' };
+		}
+		
+		// Determinar si es NAP o CDO
 		const esNAP = clasificacion && clasificacion.toUpperCase().includes('NAP');
 		const minValor = esNAP ? -3.5 : -23.5;
 		const maxValor = 5.0;
+		
+		// Verificar formato: número opcionalmente negativo, punto, exactamente 2 decimales
 		const regex = /^-?([0-9]{1,2})\.([0-9]{2})$/;
 		if (!regex.test(valor)) {
 			const rangoMsg = esNAP ? '-3.50 a 5.00' : '-23.50 a 5.00';
 			return { valido: false, mensaje: `Formato inválido. Use: ${rangoMsg} (ej: ${esNAP ? '-2.45' : '-22.45'})` };
 		}
+		
+		// Convertir a número para verificar rango
 		const num = parseFloat(valor);
 		if (num < minValor || num > maxValor) {
 			const rangoMsg = esNAP ? '-3.50 y 5.00' : '-23.50 y 5.00';
-			return { valido: false, mensaje: `Valor fuera de rango. Debe estar entre ${rangoMsg}` };
+			const tipoMsg = esNAP ? ' (NAP)' : ' (CDO)';
+			return { valido: false, mensaje: `Valor fuera de rango${tipoMsg}. Debe estar entre ${rangoMsg}` };
 		}
+		
 		return { valido: true, valor: valor };
 	}
 
+	// Formatear valor de medición automáticamente
 	function formatearMedicion(input) {
-		let valor = input.value.replace(/[^0-9.-]/g, ''); 
-		if (valor.startsWith('.')) valor = '0' + valor;
+		let valor = input.value.replace(/[^0-9.-]/g, ''); // Solo números, punto y guión
+		
+		// Si empieza con punto, agregar 0
+		if (valor.startsWith('.')) {
+			valor = '0' + valor;
+		}
+		
+		// Si tiene más de un punto, mantener solo el primero
 		const puntos = valor.split('.');
-		if (puntos.length > 2) valor = puntos[0] + '.' + puntos.slice(1).join('');
-		if (puntos.length === 2 && puntos[1].length > 2) valor = puntos[0] + '.' + puntos[1].substring(0, 2);
+		if (puntos.length > 2) {
+			valor = puntos[0] + '.' + puntos.slice(1).join('');
+		}
+		
+		// Limitar a 2 decimales
+		if (puntos.length === 2 && puntos[1].length > 2) {
+			valor = puntos[0] + '.' + puntos[1].substring(0, 2);
+		}
+		
 		input.value = valor;
 	}
 
 	async function saveMeasurementToFirestore(payload, retries = 3) {
+		if (!authReady) { 
+			console.error('❌ Auth no lista, no se puede guardar en Firestore'); 
+			throw new Error('Autenticación no lista. Recarga la página.');
+		}
 		const { proveedor, activo } = payload;
 		const id = `${proveedor}::${activo}`;
 		const ref = fbDb.collection('mediciones').doc(id);
+		console.log('📤 Guardando en Firestore:', id);
 		
 		for (let i = 0; i < retries; i++) {
 			try {
-				await ref.set({ ...payload, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
+				const timeoutPromise = new Promise((_, reject) => 
+					setTimeout(() => reject(new Error('Timeout')), 15000)
+				);
+				const savePromise = ref.set(
+					{ ...payload, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, 
+					{ merge: true }
+				);
+				await Promise.race([savePromise, timeoutPromise]);
+				console.log('✅ Guardado exitoso en Firestore:', id);
 				return;
 			} catch (e) {
-				if (i === retries - 1) throw e;
-				await new Promise(r => setTimeout(r, 1000 * (i + 1))); 
+				console.warn(`⚠️ Intento ${i + 1}/${retries} falló:`, e.message);
+				if (i === retries - 1) {
+					console.error('❌ Error final guardando en Firestore:', e);
+					throw new Error('Error guardando datos. Verifica tu conexión.');
+				}
+				await new Promise(r => setTimeout(r, 1000 * (i + 1))); // Espera progresiva
 			}
 		}
 	}
@@ -246,8 +449,63 @@
 	async function deleteMeasurementFromFirestore(proveedor, activo) {
 		try {
 			const id = `${proveedor}::${activo}`;
-			await fbDb.collection('mediciones').doc(id).delete();
-		} catch (e) {}
+			const ref = fbDb.collection('mediciones').doc(id);
+			// borrar subcolección fotos
+			const fotosSnap = await ref.collection('fotos').get();
+			const batch = fbDb.batch();
+			fotosSnap.forEach(doc => batch.delete(doc.ref));
+			await batch.commit();
+			await ref.delete();
+		} catch (e) { console.warn('Firestore delete error', e); }
+	}
+
+	function subscribeRealtime() {
+		try {
+			fbDb.collection('mediciones').where('proveedor','==',PROVIDER_KEY)
+			.onSnapshot((snap) => {
+				snap.docChanges().forEach((chg) => {
+					const data = chg.doc.data() || {};
+					const docId = chg.doc.id; // proveedor::activo
+					// Intentar mapear el documento al item local de forma robusta
+					let localId = null;
+					// 1) Coincidencia exacta por docId
+					if (states.has(docId) || items.find(x => x.id === docId)) {
+						localId = docId;
+					} else {
+						// 2) Buscar por campo activo (normalizado)
+						const activoRemote = String(data.activo || '').trim().toLowerCase().replace(/\s+/g,' ');
+						const found = items.find(x => String(x.activo || '').trim().toLowerCase().replace(/\s+/g,' ') === activoRemote);
+						if (found) localId = found.id;
+						else {
+							// 3) Buscar por sufijo del id (por si el proveedor part difiere)
+							const suf = '::' + String(data.activo || '').trim();
+							const found2 = items.find(x => x.id && x.id.endsWith(suf));
+							if (found2) localId = found2.id;
+						}
+					}
+
+					if (!localId) {
+						console.warn('Firestore change for unknown item (fallback failed):', docId, data.activo);
+						return;
+					}
+
+					if (chg.type === 'removed') {
+						states.delete(localId);
+						render();
+						return;
+					}
+
+					const curr = states.get(localId) || { estado: 'pendiente', files: [], remoteUrls: [] };
+					curr.estado = data.estado || curr.estado;
+					if (data.fotos_uris) {
+						const urls = Array.isArray(data.fotos_uris) ? data.fotos_uris : String(data.fotos_uris).split(';').filter(Boolean);
+						curr.remoteUrls = urls;
+					}
+					states.set(localId, curr);
+					render();
+				});
+			});
+		} catch (e) { console.warn('Realtime subscription error', e); }
 	}
 	</script>
 
@@ -255,63 +513,264 @@
 	const INITIAL_ITEMS = [{"activo": "NRARA01 - A-B", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 1.0, "Buffer": "Azul", "Color FO": "Azul", "PUERTO": "0/1/0"}, {"activo": "NRARA01 - C-D", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 2.0, "Buffer": "Azul", "Color FO": "Naranja", "PUERTO": "0/1/1"}, {"activo": "NRARA02 - A-B", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 3.0, "Buffer": "Azul", "Color FO": "Verde", "PUERTO": "0/1/2"}, {"activo": "NRARA02 - C-D", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 4.0, "Buffer": "Azul", "Color FO": "Marron", "PUERTO": "0/1/3"}, {"activo": "NRARA02 - E-F", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 5.0, "Buffer": "Azul", "Color FO": "Gris", "PUERTO": "0/1/4"}, {"activo": "NRARA02 - PRECO - I", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 6.0, "Buffer": "Azul", "Color FO": "Blanco", "PUERTO": "0/1/5"}, {"activo": "NRARA03 - A-B", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 7.0, "Buffer": "Azul", "Color FO": "Rojo", "PUERTO": "0/1/6"}, {"activo": "NRARA03 - C-D", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 8.0, "Buffer": "Azul", "Color FO": "Negro", "PUERTO": "0/1/7"}, {"activo": "NRARA03 - PRECO - I", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 9.0, "Buffer": "Azul", "Color FO": "Amarillo", "PUERTO": "0/1/8"}, {"activo": "NRARA04 - A-B", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 10.0, "Buffer": "Azul", "Color FO": "Violeta", "PUERTO": "0/1/9"}, {"activo": "NRARA04 - C-D", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 11.0, "Buffer": "Azul", "Color FO": "Rosa", "PUERTO": "0/1/10"}, {"activo": "NRARA04 - PRECO - I", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 12.0, "Buffer": "Azul", "Color FO": "Celeste", "PUERTO": "0/1/11"}, {"activo": "NRARA05 - A-B", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 13.0, "Buffer": "Naranja", "Color FO": "Azul", "PUERTO": "0/1/12"}, {"activo": "NRARA05 - C-D", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 14.0, "Buffer": "Naranja", "Color FO": "Naranja", "PUERTO": "0/1/13"}, {"activo": "NRARA06 - A-B", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 15.0, "Buffer": "Naranja", "Color FO": "Verde", "PUERTO": "0/1/14"}, {"activo": "NRARA06 - C-D", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 16.0, "Buffer": "Naranja", "Color FO": "Marron", "PUERTO": "0/1/15"}, {"activo": "NRARA06 - E-F", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 17.0, "Buffer": "Naranja", "Color FO": "Gris", "PUERTO": "0/2/0"}, {"activo": "NRARA07 - A-B", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 18.0, "Buffer": "Naranja", "Color FO": "Blanco", "PUERTO": "0/2/1"}, {"activo": "NRARA07 - C-D", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 19.0, "Buffer": "Naranja", "Color FO": "Rojo", "PUERTO": "0/2/2"}, {"activo": "NRARA07 - E-F", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 20.0, "Buffer": "Naranja", "Color FO": "Negro", "PUERTO": "0/2/3"}, {"activo": "NRARA08 - A-B", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 21.0, "Buffer": "Naranja", "Color FO": "Amarillo", "PUERTO": "0/2/4"}, {"activo": "NRARA08 - C-D", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 22.0, "Buffer": "Naranja", "Color FO": "Violeta", "PUERTO": "0/2/5"}, {"activo": "NRARA08 - E-F", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 23.0, "Buffer": "Naranja", "Color FO": "Rosa", "PUERTO": "0/2/6"}, {"activo": "NRARA09 - A-B", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 24.0, "Buffer": "Naranja", "Color FO": "Celeste", "PUERTO": "0/2/7"}, {"activo": "NRARA09 - C-D", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 25.0, "Buffer": "Verde", "Color FO": "Azul", "PUERTO": "0/2/8"}, {"activo": "NRARA10 - A-B", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 26.0, "Buffer": "Verde", "Color FO": "Naranja", "PUERTO": "0/2/9"}, {"activo": "NRARA10 - C-D", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 27.0, "Buffer": "Verde", "Color FO": "Verde", "PUERTO": "0/2/10"}, {"activo": "NRARA10 - E-F", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 28.0, "Buffer": "Verde", "Color FO": "Marron", "PUERTO": "0/2/11"}, {"activo": "NRARA11 - A-B", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 29.0, "Buffer": "Verde", "Color FO": "Gris", "PUERTO": "0/2/12"}, {"activo": "NRARA11 - C-D", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 30.0, "Buffer": "Verde", "Color FO": "Blanco", "PUERTO": "0/2/13"}, {"activo": "NRARA11 - E-F", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 31.0, "Buffer": "Verde", "Color FO": "Rojo", "PUERTO": "0/2/14"}, {"activo": "NRARA11 - PRECO - I", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 32.0, "Buffer": "Verde", "Color FO": "Negro", "PUERTO": "0/2/15"}, {"activo": "NRARA12 - A-B", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 33.0, "Buffer": "Verde", "Color FO": "Amarillo", "PUERTO": "0/3/0"}, {"activo": "NRARA12 - C-D", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 34.0, "Buffer": "Verde", "Color FO": "Violeta", "PUERTO": "0/3/1"}, {"activo": "NRARA12 - E-F", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 35.0, "Buffer": "Verde", "Color FO": "Rosa", "PUERTO": "0/3/2"}, {"activo": "NRARA12 - PRECO - I", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 36.0, "Buffer": "Verde", "Color FO": "Celeste", "PUERTO": "0/3/3"}, {"activo": "NRARA13 - A-B", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 37.0, "Buffer": "Marron", "Color FO": "Azul", "PUERTO": "0/3/4"}, {"activo": "NRARA13 - C-D", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 38.0, "Buffer": "Marron", "Color FO": "Naranja", "PUERTO": "0/3/5"}, {"activo": "NRARA13 - PRECO - I", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 39.0, "Buffer": "Marron", "Color FO": "Verde", "PUERTO": "0/3/6"}, {"activo": "NRARA14 - A-B", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 40.0, "Buffer": "Marron", "Color FO": "Marron", "PUERTO": "0/3/7"}, {"activo": "NRARA14 - C-D", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 41.0, "Buffer": "Marron", "Color FO": "Gris", "PUERTO": "0/3/8"}, {"activo": "NRARA14 - PRECO - I", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 42.0, "Buffer": "Marron", "Color FO": "Blanco", "PUERTO": "0/3/9"}, {"activo": "NRARA15 - A-B", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 43.0, "Buffer": "Marron", "Color FO": "Rojo", "PUERTO": "0/3/10"}, {"activo": "NRARA15 - C-D", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 44.0, "Buffer": "Marron", "Color FO": "Negro", "PUERTO": "0/3/11"}, {"activo": "NRARB01 - A-B", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 73.0, "Buffer": "Rojo", "Color FO": "Azul", "PUERTO": "0/3/12"}, {"activo": "NRARB01 - C-D", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 74.0, "Buffer": "Rojo", "Color FO": "Naranja", "PUERTO": "0/3/13"}, {"activo": "NRARB01 - E-F", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 75.0, "Buffer": "Rojo", "Color FO": "Verde", "PUERTO": "0/3/14"}, {"activo": "NRARB02 - A-B", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 76.0, "Buffer": "Rojo", "Color FO": "Marron", "PUERTO": "0/3/15"}, {"activo": "NRARB02 - C-D", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 77.0, "Buffer": "Rojo", "Color FO": "Gris", "PUERTO": "0/4/0"}, {"activo": "NRARB02 - E-F", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 78.0, "Buffer": "Rojo", "Color FO": "Blanco", "PUERTO": "0/4/1"}, {"activo": "NRARB02 - G-H", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 79.0, "Buffer": "Rojo", "Color FO": "Rojo", "PUERTO": "0/4/2"}, {"activo": "NRARB03 - A-B", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 80.0, "Buffer": "Rojo", "Color FO": "Negro", "PUERTO": "0/4/3"}, {"activo": "NRARB03 - C-D", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 81.0, "Buffer": "Rojo", "Color FO": "Amarillo", "PUERTO": "0/4/4"}, {"activo": "NRARB04 - A-B", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 82.0, "Buffer": "Rojo", "Color FO": "Violeta", "PUERTO": "0/4/5"}, {"activo": "NRARB04 - C-D", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 83.0, "Buffer": "Rojo", "Color FO": "Rosa", "PUERTO": "0/4/6"}, {"activo": "NRARB04 - E-F", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 84.0, "Buffer": "Rojo", "Color FO": "Celeste", "PUERTO": "0/4/7"}, {"activo": "NRARB04 - G-H", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 85.0, "Buffer": "Negro", "Color FO": "Azul", "PUERTO": "0/4/8"}, {"activo": "NRARB05 - A-B", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 86.0, "Buffer": "Negro", "Color FO": "Naranja", "PUERTO": "0/4/9"}, {"activo": "NRARB05 - C-D", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 87.0, "Buffer": "Negro", "Color FO": "Verde", "PUERTO": "0/4/10"}, {"activo": "NRARB05 - E-F", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 88.0, "Buffer": "Negro", "Color FO": "Marron", "PUERTO": "0/4/11"}, {"activo": "NRARB05 - G-H", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 89.0, "Buffer": "Negro", "Color FO": "Gris", "PUERTO": "0/4/12"}, {"activo": "NRARB05 - PRECO - I", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 90.0, "Buffer": "Negro", "Color FO": "Blanco", "PUERTO": "0/4/13"}, {"activo": "NRARB06 - A-B", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 91.0, "Buffer": "Negro", "Color FO": "Rojo", "PUERTO": "0/4/14"}, {"activo": "NRARB06 - C-D", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 92.0, "Buffer": "Negro", "Color FO": "Negro", "PUERTO": "0/4/15"}, {"activo": "NRARB06 - PRECO - I", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 93.0, "Buffer": "Negro", "Color FO": "Amarillo", "PUERTO": "0/5/0"}, {"activo": "NRARB07 - A-B", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 94.0, "Buffer": "Negro", "Color FO": "Violeta", "PUERTO": "0/5/1"}, {"activo": "NRARB07 - C-D", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 95.0, "Buffer": "Negro", "Color FO": "Rosa", "PUERTO": "0/5/2"}, {"activo": "NRARB07 - E-F", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 96.0, "Buffer": "Negro", "Color FO": "Celeste", "PUERTO": "0/5/3"}, {"activo": "NRARB08 - A-B", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 97.0, "Buffer": "Amarillo", "Color FO": "Azul", "PUERTO": "0/5/4"}, {"activo": "NRARB08 - C-D", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 98.0, "Buffer": "Amarillo", "Color FO": "Naranja", "PUERTO": "0/5/5"}, {"activo": "NRARB08 - E-F", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 99.0, "Buffer": "Amarillo", "Color FO": "Verde", "PUERTO": "0/5/6"}, {"activo": "NRARB09 - A-B", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 100.0, "Buffer": "Amarillo", "Color FO": "Marron", "PUERTO": "0/5/7"}, {"activo": "NRARB09 - C-D", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 101.0, "Buffer": "Amarillo", "Color FO": "Gris", "PUERTO": "0/5/8"}, {"activo": "NRARB09 - E-F", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 102.0, "Buffer": "Amarillo", "Color FO": "Blanco", "PUERTO": "0/5/9"}, {"activo": "NRARB10 - A-B", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 103.0, "Buffer": "Amarillo", "Color FO": "Rojo", "PUERTO": "0/5/10"}, {"activo": "NRARB10 - C-D", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 104.0, "Buffer": "Amarillo", "Color FO": "Negro", "PUERTO": "0/5/11"}, {"activo": "NRARB11 - A-B", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 105.0, "Buffer": "Amarillo", "Color FO": "Amarillo", "PUERTO": "0/5/12"}, {"activo": "NRARB11 - C-D", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 106.0, "Buffer": "Amarillo", "Color FO": "Violeta", "PUERTO": "0/5/13"}, {"activo": "NRARB11 - E-F", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 107.0, "Buffer": "Amarillo", "Color FO": "Rosa", "PUERTO": "0/5/14"}, {"activo": "NRARB11 - PRECO - I", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 108.0, "Buffer": "Amarillo", "Color FO": "Celeste", "PUERTO": "0/5/15"}, {"activo": "NRARB12 - A-B", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 109.0, "Buffer": "Violeta", "Color FO": "Azul", "PUERTO": "0/6/0"}, {"activo": "NRARB12 - C-D", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 110.0, "Buffer": "Violeta", "Color FO": "Naranja", "PUERTO": "0/6/1"}, {"activo": "NRARB12 - E-F", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 111.0, "Buffer": "Violeta", "Color FO": "Verde", "PUERTO": "0/6/2"}, {"activo": "NRARB13 - A-B", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 112.0, "Buffer": "Violeta", "Color FO": "Marron", "PUERTO": "0/6/3"}, {"activo": "NRARB13 - C-D", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 113.0, "Buffer": "Violeta", "Color FO": "Gris", "PUERTO": "0/6/4"}, {"activo": "NRARB13 - E-F", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 114.0, "Buffer": "Violeta", "Color FO": "Blanco", "PUERTO": "0/6/5"}, {"activo": "NRARB14 - A-B", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 115.0, "Buffer": "Violeta", "Color FO": "Rojo", "PUERTO": "0/6/6"}, {"activo": "NRARB14 - C-D", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 116.0, "Buffer": "Violeta", "Color FO": "Negro", "PUERTO": "0/6/7"}, {"activo": "NRARC01 - A-B", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 145.0, "Buffer": "Azul Rayado", "Color FO": "Azul", "PUERTO": "0/6/8"}, {"activo": "NRARC01 - C-D", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 146.0, "Buffer": "Azul Rayado", "Color FO": "Naranja", "PUERTO": "0/6/9"}, {"activo": "NRARC01 - E-F", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 147.0, "Buffer": "Azul Rayado", "Color FO": "Verde", "PUERTO": "0/6/10"}, {"activo": "NRARC01 - G-H", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 148.0, "Buffer": "Azul Rayado", "Color FO": "Marron", "PUERTO": "0/6/11"}, {"activo": "NRARC01 - PRECO - I", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 149.0, "Buffer": "Azul Rayado", "Color FO": "Gris", "PUERTO": "0/6/12"}, {"activo": "NRARC02 - A-B", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 150.0, "Buffer": "Azul Rayado", "Color FO": "Blanco", "PUERTO": "0/6/13"}, {"activo": "NRARC02 - C-D", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 151.0, "Buffer": "Azul Rayado", "Color FO": "Rojo", "PUERTO": "0/6/14"}, {"activo": "NRARC02 - E-F", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 152.0, "Buffer": "Azul Rayado", "Color FO": "Negro", "PUERTO": "0/6/15"}, {"activo": "NRARC02 - PRECO - I", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 153.0, "Buffer": "Azul Rayado", "Color FO": "Amarillo", "PUERTO": "0/7/0"}, {"activo": "NRARC03 - A-B", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 154.0, "Buffer": "Azul Rayado", "Color FO": "Violeta", "PUERTO": "0/7/1"}, {"activo": "NRARC03 - C-D", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 155.0, "Buffer": "Azul Rayado", "Color FO": "Rosa", "PUERTO": "0/7/2"}, {"activo": "NRARC04 - A-B", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 156.0, "Buffer": "Azul Rayado", "Color FO": "Celeste", "PUERTO": "0/7/3"}, {"activo": "NRARC04 - C-D", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 157.0, "Buffer": "Naranja Rayado", "Color FO": "Azul", "PUERTO": "0/7/4"}, {"activo": "NRARC04 - PRECO - I", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 158.0, "Buffer": "Naranja Rayado", "Color FO": "Naranja", "PUERTO": "0/7/5"}, {"activo": "NRARC04 - PRECO - J", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 159.0, "Buffer": "Naranja Rayado", "Color FO": "Verde", "PUERTO": "0/7/6"}, {"activo": "NRARC04 - FO DEDICADA", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 160.0, "Buffer": "Naranja Rayado", "Color FO": "Marron", "PUERTO": "0/7/7"}, {"activo": "NRARC05 - A-B", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 161.0, "Buffer": "Naranja Rayado", "Color FO": "Gris", "PUERTO": "0/7/8"}, {"activo": "NRARC05 - C-D", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 162.0, "Buffer": "Naranja Rayado", "Color FO": "Blanco", "PUERTO": "0/7/9"}, {"activo": "NRARC05 - E-F", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 163.0, "Buffer": "Naranja Rayado", "Color FO": "Rojo", "PUERTO": "0/7/10"}, {"activo": "NRARC05 - PRECO - I", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 164.0, "Buffer": "Naranja Rayado", "Color FO": "Negro", "PUERTO": "0/7/11"}, {"activo": "NRARC05 - PRECO - J", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 165.0, "Buffer": "Naranja Rayado", "Color FO": "Amarillo", "PUERTO": "0/7/12"}, {"activo": "NRARC06 - A-B", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 166.0, "Buffer": "Naranja Rayado", "Color FO": "Violeta", "PUERTO": "0/7/13"}, {"activo": "NRARC06 - C-D", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 167.0, "Buffer": "Naranja Rayado", "Color FO": "Rosa", "PUERTO": "0/7/14"}, {"activo": "NRARC06 - PRECO - I", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 168.0, "Buffer": "Naranja Rayado", "Color FO": "Celeste", "PUERTO": "0/7/15"}, {"activo": "NRARC07 - A-B", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 169.0, "Buffer": "Verde Rayado", "Color FO": "Azul", "PUERTO": "0/8/0"}, {"activo": "NRARC07 - C-D", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 170.0, "Buffer": "Verde Rayado", "Color FO": "Naranja", "PUERTO": "0/8/1"}, {"activo": "NRARC07 - FO DEDICADA", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 171.0, "Buffer": "Verde Rayado", "Color FO": "Verde", "PUERTO": "0/8/2"}, {"activo": "NRARC07 - FO DEDICADA", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 172.0, "Buffer": "Verde Rayado", "Color FO": "Marron", "PUERTO": "0/8/3"}, {"activo": "NRARC08 - A-B", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 173.0, "Buffer": "Verde Rayado", "Color FO": "Gris", "PUERTO": "0/8/4"}, {"activo": "NRARC08 - C-D", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 174.0, "Buffer": "Verde Rayado", "Color FO": "Blanco", "PUERTO": "0/8/5"}, {"activo": "NRARC08 - E-F", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 175.0, "Buffer": "Verde Rayado", "Color FO": "Rojo", "PUERTO": "0/8/6"}, {"activo": "NRARC09 - A-B", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 176.0, "Buffer": "Verde Rayado", "Color FO": "Negro", "PUERTO": "0/8/7"}, {"activo": "NRARC09 - C-D", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 177.0, "Buffer": "Verde Rayado", "Color FO": "Amarillo", "PUERTO": "0/8/8"}, {"activo": "NRARC09 - E-F", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 178.0, "Buffer": "Verde Rayado", "Color FO": "Violeta", "PUERTO": "0/8/9"}, {"activo": "NRARC09 - PRECO - I", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 179.0, "Buffer": "Verde Rayado", "Color FO": "Rosa", "PUERTO": "0/8/10"}, {"activo": "NRARC09 - FO DEDICADA", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 180.0, "Buffer": "Verde Rayado", "Color FO": "Celeste", "PUERTO": "0/8/11"}, {"activo": "NRARC09 - FO DEDICADA", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 181.0, "Buffer": "Marron Rayado", "Color FO": "Azul", "PUERTO": "0/8/12"}, {"activo": "NRARC10 - A-B", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 182.0, "Buffer": "Marron Rayado", "Color FO": "Naranja", "PUERTO": "0/8/13"}, {"activo": "NRARC10 - C-D", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 183.0, "Buffer": "Marron Rayado", "Color FO": "Verde", "PUERTO": "0/8/14"}, {"activo": "NRARC10 - E-F", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 184.0, "Buffer": "Marron Rayado", "Color FO": "Marron", "PUERTO": "0/8/15"}, {"activo": "NRARC11 - A-B", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 185.0, "Buffer": "Marron Rayado", "Color FO": "Gris", "PUERTO": "0/11/0"}, {"activo": "NRARC11 - C-D", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 186.0, "Buffer": "Marron Rayado", "Color FO": "Blanco", "PUERTO": "0/11/1"}, {"activo": "NRARC11 - E-F", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 187.0, "Buffer": "Marron Rayado", "Color FO": "Rojo", "PUERTO": "0/11/2"}, {"activo": "NRARC12 - A-B", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 188.0, "Buffer": "Marron Rayado", "Color FO": "Negro", "PUERTO": "0/11/3"}, {"activo": "NRARC12 - C-D", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 189.0, "Buffer": "Marron Rayado", "Color FO": "Amarillo", "PUERTO": "0/11/4"}, {"activo": "NRARC12 - PRECO - I", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 190.0, "Buffer": "Marron Rayado", "Color FO": "Violeta", "PUERTO": "0/11/5"}, {"activo": "NRARC13 - A-B", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 191.0, "Buffer": "Marron Rayado", "Color FO": "Rosa", "PUERTO": "0/11/6"}, {"activo": "NRARC13 - C-D", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 192.0, "Buffer": "Marron Rayado", "Color FO": "Celeste", "PUERTO": "0/11/7"}, {"activo": "NRARC13 - E-F", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 193.0, "Buffer": "Gris Rayado", "Color FO": "Azul", "PUERTO": "0/11/8"}, {"activo": "NRARC13 - PRECO - I", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 194.0, "Buffer": "Gris Rayado", "Color FO": "Naranja", "PUERTO": "0/11/9"}, {"activo": "NRARC13 - FO DEDICADA", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 195.0, "Buffer": "Gris Rayado", "Color FO": "Verde", "PUERTO": "0/11/10"}, {"activo": "NRARC13 - FO DEDICADA", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 196.0, "Buffer": "Gris Rayado", "Color FO": "Marron", "PUERTO": "0/11/11"}, {"activo": "NRARC13 - FO DEDICADA", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 197.0, "Buffer": "Gris Rayado", "Color FO": "Gris", "PUERTO": "0/11/12"}, {"activo": "NRARC14 - A-B", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 198.0, "Buffer": "Gris Rayado", "Color FO": "Blanco", "PUERTO": "0/11/13"}, {"activo": "NRARC14 - C-D", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 199.0, "Buffer": "Gris Rayado", "Color FO": "Rojo", "PUERTO": "0/11/14"}, {"activo": "NRARC14 - PRECO - I", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 200.0, "Buffer": "Gris Rayado", "Color FO": "Negro", "PUERTO": "0/11/15"}, {"activo": "NRARC14 - PRECO - J", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 201.0, "Buffer": "Gris Rayado", "Color FO": "Amarillo", "PUERTO": "0/12/0"}, {"activo": "NRARC14 - FO DEDICADA", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 202.0, "Buffer": "Gris Rayado", "Color FO": "Violeta", "PUERTO": "0/12/1"}, {"activo": "NRARC15 - A-B", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 203.0, "Buffer": "Gris Rayado", "Color FO": "Rosa", "PUERTO": "0/12/2"}, {"activo": "NRARC15 - C-D", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 204.0, "Buffer": "Gris Rayado", "Color FO": "Celeste", "PUERTO": "0/12/3"}, {"activo": "NRARC15 - E-F", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 205.0, "Buffer": "Blanco Rayado", "Color FO": "Azul", "PUERTO": "0/12/4"}, {"activo": "NRARC15 - PRECO - I", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 206.0, "Buffer": "Blanco Rayado", "Color FO": "Naranja", "PUERTO": "0/12/5"}, {"activo": "NRARC15 - PRECO - J", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 207.0, "Buffer": "Blanco Rayado", "Color FO": "Verde", "PUERTO": "0/12/6"}, {"activo": "NRARC15 - FO DEDICADA", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 208.0, "Buffer": "Blanco Rayado", "Color FO": "Marron", "PUERTO": "0/12/7"}, {"activo": "NRARD01 - A-B", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 217.0, "Buffer": "Rojo Rayado", "Color FO": "Azul", "PUERTO": "0/12/8"}, {"activo": "NRARD01 - C-D", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 218.0, "Buffer": "Rojo Rayado", "Color FO": "Naranja", "PUERTO": "0/12/9"}, {"activo": "NRARD01 - E-F", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 219.0, "Buffer": "Rojo Rayado", "Color FO": "Verde", "PUERTO": "0/12/10"}, {"activo": "NRARD01 - G-H", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 220.0, "Buffer": "Rojo Rayado", "Color FO": "Marron", "PUERTO": "0/12/11"}, {"activo": "NRARD02 - A-B", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 221.0, "Buffer": "Rojo Rayado", "Color FO": "Gris", "PUERTO": "0/12/12"}, {"activo": "NRARD02 - C-D", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 222.0, "Buffer": "Rojo Rayado", "Color FO": "Blanco", "PUERTO": "0/12/13"}, {"activo": "NRARD02 - E-F", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 223.0, "Buffer": "Rojo Rayado", "Color FO": "Rojo", "PUERTO": "0/12/14"}, {"activo": "NRARD02 - G-H", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 224.0, "Buffer": "Rojo Rayado", "Color FO": "Negro", "PUERTO": "0/12/15"}, {"activo": "NRARD03 - A-B", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 225.0, "Buffer": "Rojo Rayado", "Color FO": "Amarillo", "PUERTO": "0/13/0"}, {"activo": "NRARD03 - PRECO - I", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 226.0, "Buffer": "Rojo Rayado", "Color FO": "Violeta", "PUERTO": "0/13/1"}, {"activo": "NRARD04 - A-B", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 227.0, "Buffer": "Rojo Rayado", "Color FO": "Rosa", "PUERTO": "0/13/2"}, {"activo": "NRARD04 - C-D", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 228.0, "Buffer": "Rojo Rayado", "Color FO": "Celeste", "PUERTO": "0/13/3"}, {"activo": "NRARD04 - PRECO - I", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 229.0, "Buffer": "Negro Rayado", "Color FO": "Azul", "PUERTO": "0/13/4"}, {"activo": "NRARD05 - A-B", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 230.0, "Buffer": "Negro Rayado", "Color FO": "Naranja", "PUERTO": "0/13/5"}, {"activo": "NRARD05 - C-D", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 231.0, "Buffer": "Negro Rayado", "Color FO": "Verde", "PUERTO": "0/13/6"}, {"activo": "NRARD06 - A-B", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 232.0, "Buffer": "Negro Rayado", "Color FO": "Marron", "PUERTO": "0/13/7"}, {"activo": "NRARD06 - C-D", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 233.0, "Buffer": "Negro Rayado", "Color FO": "Gris", "PUERTO": "0/13/8"}, {"activo": "NRARD06 - E-F", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 234.0, "Buffer": "Negro Rayado", "Color FO": "Blanco", "PUERTO": "0/13/9"}, {"activo": "NRARD06 - G-H", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 235.0, "Buffer": "Negro Rayado", "Color FO": "Rojo", "PUERTO": "0/13/10"}, {"activo": "NRARD06 - PRECO - I", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 236.0, "Buffer": "Negro Rayado", "Color FO": "Negro", "PUERTO": "0/13/11"}, {"activo": "NRARD06 - PRECO - J", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 237.0, "Buffer": "Negro Rayado", "Color FO": "Amarillo", "PUERTO": "0/13/12"}, {"activo": "NRARD07 - A-B", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 238.0, "Buffer": "Negro Rayado", "Color FO": "Violeta", "PUERTO": "0/13/13"}, {"activo": "NRARD07 - C-D", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 239.0, "Buffer": "Negro Rayado", "Color FO": "Rosa", "PUERTO": "0/13/14"}, {"activo": "NRARD07 - E-F", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 240.0, "Buffer": "Negro Rayado", "Color FO": "Celeste", "PUERTO": "0/13/15"}, {"activo": "NRARD07 - PRECO - I", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 241.0, "Buffer": "Amarillo Rayado", "Color FO": "Azul", "PUERTO": "0/14/0"}, {"activo": "NRARD08 - A-B", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 242.0, "Buffer": "Amarillo Rayado", "Color FO": "Naranja", "PUERTO": "0/14/1"}, {"activo": "NRARD08 - C-D", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 243.0, "Buffer": "Amarillo Rayado", "Color FO": "Verde", "PUERTO": "0/14/2"}, {"activo": "NRARD08 - E-F", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 244.0, "Buffer": "Amarillo Rayado", "Color FO": "Marron", "PUERTO": "0/14/3"}, {"activo": "NRARD08 - PRECO - I", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 245.0, "Buffer": "Amarillo Rayado", "Color FO": "Gris", "PUERTO": "0/14/4"}, {"activo": "NRARD09 - A-B", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 246.0, "Buffer": "Amarillo Rayado", "Color FO": "Blanco", "PUERTO": "0/14/5"}, {"activo": "NRARD09 - C-D", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 247.0, "Buffer": "Amarillo Rayado", "Color FO": "Rojo", "PUERTO": "0/14/6"}, {"activo": "NRARD09 - E-F", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 248.0, "Buffer": "Amarillo Rayado", "Color FO": "Negro", "PUERTO": "0/14/7"}, {"activo": "NRARD09 - G-H", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 249.0, "Buffer": "Amarillo Rayado", "Color FO": "Amarillo", "PUERTO": "0/14/8"}, {"activo": "NRARD09 - PRECO - I", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 250.0, "Buffer": "Amarillo Rayado", "Color FO": "Violeta", "PUERTO": "0/14/9"}, {"activo": "NRARD10 - A-B", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 251.0, "Buffer": "Amarillo Rayado", "Color FO": "Rosa", "PUERTO": "0/14/10"}, {"activo": "NRARD10 - C-D", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 252.0, "Buffer": "Amarillo Rayado", "Color FO": "Celeste", "PUERTO": "0/14/11"}, {"activo": "NRARD10 - E-F", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 253.0, "Buffer": "Violeta Rayado", "Color FO": "Azul", "PUERTO": "0/14/12"}, {"activo": "NRARD10 - G-H", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 254.0, "Buffer": "Violeta Rayado", "Color FO": "Naranja", "PUERTO": "0/14/13"}, {"activo": "NRARD10 - PRECO - I", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 255.0, "Buffer": "Violeta Rayado", "Color FO": "Verde", "PUERTO": "0/14/14"}, {"activo": "NRARD11 - A-B", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 256.0, "Buffer": "Violeta Rayado", "Color FO": "Marron", "PUERTO": "0/14/15"}, {"activo": "NRARD11 - C-D", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 257.0, "Buffer": "Violeta Rayado", "Color FO": "Gris", "PUERTO": "0/15/0"}, {"activo": "NRARD11 - E-F", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 258.0, "Buffer": "Violeta Rayado", "Color FO": "Blanco", "PUERTO": "0/15/1"}, {"activo": "NRARD11 - PRECO - I", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 259.0, "Buffer": "Violeta Rayado", "Color FO": "Rojo", "PUERTO": "0/15/2"}, {"activo": "NRARD11 - PRECO - J", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 260.0, "Buffer": "Violeta Rayado", "Color FO": "Negro", "PUERTO": "0/15/3"}, {"activo": "NRARD12 - A-B", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 261.0, "Buffer": "Violeta Rayado", "Color FO": "Amarillo", "PUERTO": "0/15/4"}, {"activo": "NRARD12 - C-D", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 262.0, "Buffer": "Violeta Rayado", "Color FO": "Violeta", "PUERTO": "0/15/5"}, {"activo": "NRARD12 - E-F", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 263.0, "Buffer": "Violeta Rayado", "Color FO": "Rosa", "PUERTO": "0/15/6"}, {"activo": "NRARD12 - G-H", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 264.0, "Buffer": "Violeta Rayado", "Color FO": "Celeste", "PUERTO": "0/15/7"}, {"activo": "NRARD13 - A-B", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 265.0, "Buffer": "Rosa Rayado", "Color FO": "Azul", "PUERTO": "0/15/8"}, {"activo": "NRARD13 - PRECO - I", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 266.0, "Buffer": "Rosa Rayado", "Color FO": "Naranja", "PUERTO": "0/15/9"}, {"activo": "NRARD13 - PRECO - J", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 267.0, "Buffer": "Rosa Rayado", "Color FO": "Verde", "PUERTO": "0/15/10"}, {"activo": "NRARD14 - A-B", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 268.0, "Buffer": "Rosa Rayado", "Color FO": "Marron", "PUERTO": "0/15/11"}, {"activo": "NRARD14 - PRECO - I", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 269.0, "Buffer": "Rosa Rayado", "Color FO": "Gris", "PUERTO": "0/15/12"}, {"activo": "NRARD14 - PRECO - J", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 270.0, "Buffer": "Rosa Rayado", "Color FO": "Blanco", "PUERTO": "0/15/13"}, {"activo": "NRARD14 - FO DEDICADA", "clasificacion": "NAP", "Troncal TR-PD-": 288.0, "Nro FO": 271.0, "Buffer": "Rosa Rayado", "Color FO": "Rojo", "PUERTO": "0/15/14"}, {"activo": "NRARA01A1", "clasificacion": "CDO"}, {"activo": "NRARA01B1", "clasificacion": "CDO"}, {"activo": "NRARA01C1", "clasificacion": "CDO"}, {"activo": "NRARA02A1", "clasificacion": "CDO"}, {"activo": "NRARA02B1", "clasificacion": "CDO"}, {"activo": "NRARA02B3", "clasificacion": "CDO"}, {"activo": "NRARA02C1", "clasificacion": "CDO"}, {"activo": "NRARA02D1", "clasificacion": "CDO"}, {"activo": "NRARA03A1", "clasificacion": "CDO"}, {"activo": "NRARA03B1", "clasificacion": "CDO"}, {"activo": "NRARA04A1", "clasificacion": "CDO"}, {"activo": "NRARA04A3", "clasificacion": "CDO"}, {"activo": "NRARA05A1", "clasificacion": "CDO"}, {"activo": "NRARA05A3", "clasificacion": "CDO"}, {"activo": "NRARA06A1", "clasificacion": "CDO"}, {"activo": "NRARA06B1", "clasificacion": "CDO"}, {"activo": "NRARA06C1", "clasificacion": "CDO"}, {"activo": "NRARA06D1", "clasificacion": "CDO"}, {"activo": "NRARA06E1", "clasificacion": "CDO"}, {"activo": "NRARA06E3", "clasificacion": "CDO"}, {"activo": "NRARA07A1", "clasificacion": "CDO"}, {"activo": "NRARA07B1", "clasificacion": "CDO"}, {"activo": "NRARA07B3", "clasificacion": "CDO"}, {"activo": "NRARA07C1", "clasificacion": "CDO"}, {"activo": "NRARA07C3", "clasificacion": "CDO"}, {"activo": "NRARA07D1", "clasificacion": "CDO"}, {"activo": "NRARA08A1", "clasificacion": "CDO"}, {"activo": "NRARA08B1", "clasificacion": "CDO"}, {"activo": "NRARA08C1", "clasificacion": "CDO"}, {"activo": "NRARA08D1", "clasificacion": "CDO"}, {"activo": "NRARA09A1", "clasificacion": "CDO"}, {"activo": "NRARA09B1", "clasificacion": "CDO"}, {"activo": "NRARA10A1", "clasificacion": "CDO"}, {"activo": "NRARA10A3", "clasificacion": "CDO"}, {"activo": "NRARA10B1", "clasificacion": "CDO"}, {"activo": "NRARA10C1", "clasificacion": "CDO"}, {"activo": "NRARA11A1", "clasificacion": "CDO"}, {"activo": "NRARA11B1", "clasificacion": "CDO"}, {"activo": "NRARA11B3", "clasificacion": "CDO"}, {"activo": "NRARA11C1", "clasificacion": "CDO"}, {"activo": "NRARA11D1", "clasificacion": "CDO"}, {"activo": "NRARA12A1", "clasificacion": "CDO"}, {"activo": "NRARA12B1", "clasificacion": "CDO"}, {"activo": "NRARA12C1", "clasificacion": "CDO"}, {"activo": "NRARA12C3", "clasificacion": "CDO"}, {"activo": "NRARA12D1", "clasificacion": "CDO"}, {"activo": "NRARA12D3", "clasificacion": "CDO"}, {"activo": "NRARA13A1", "clasificacion": "CDO"}, {"activo": "NRARA13A3", "clasificacion": "CDO"}, {"activo": "NRARA13B1", "clasificacion": "CDO"}, {"activo": "NRARA13B3", "clasificacion": "CDO"}, {"activo": "NRARA13C1", "clasificacion": "CDO"}, {"activo": "NRARA13C3", "clasificacion": "CDO"}, {"activo": "NRARA14A1", "clasificacion": "CDO"}, {"activo": "NRARA14B1", "clasificacion": "CDO"}, {"activo": "NRARA14B3", "clasificacion": "CDO"}, {"activo": "NRARA15A1", "clasificacion": "CDO"}, {"activo": "NRARA15B1", "clasificacion": "CDO"}, {"activo": "NRARB01A1", "clasificacion": "CDO"}, {"activo": "NRARB01A3", "clasificacion": "CDO"}, {"activo": "NRARB01B1", "clasificacion": "CDO"}, {"activo": "NRARB01C1", "clasificacion": "CDO"}, {"activo": "NRARB01D1", "clasificacion": "CDO"}, {"activo": "NRARB01E1", "clasificacion": "CDO"}, {"activo": "NRARB02A1", "clasificacion": "CDO"}, {"activo": "NRARB02B1", "clasificacion": "CDO"}, {"activo": "NRARB02B3", "clasificacion": "CDO"}, {"activo": "NRARB02C1", "clasificacion": "CDO"}, {"activo": "NRARB02D1", "clasificacion": "CDO"}, {"activo": "NRARB02E1", "clasificacion": "CDO"}, {"activo": "NRARB02H2", "clasificacion": "CDO"}, {"activo": "NRARB03A1", "clasificacion": "CDO"}, {"activo": "NRARB03B1", "clasificacion": "CDO"}, {"activo": "NRARB03C1", "clasificacion": "CDO"}, {"activo": "NRARB03D1", "clasificacion": "CDO"}, {"activo": "NRARB04A1", "clasificacion": "CDO"}, {"activo": "NRARB04B1", "clasificacion": "CDO"}, {"activo": "NRARB04B2", "clasificacion": "CDO"}, {"activo": "NRARB04C1", "clasificacion": "CDO"}, {"activo": "NRARB04D1", "clasificacion": "CDO"}, {"activo": "NRARB04E1", "clasificacion": "CDO"}, {"activo": "NRARB04E3", "clasificacion": "CDO"}, {"activo": "NRARB04F1", "clasificacion": "CDO"}, {"activo": "NRARB04F3", "clasificacion": "CDO"}, {"activo": "NRARB04G1", "clasificacion": "CDO"}, {"activo": "NRARB05A1", "clasificacion": "CDO"}, {"activo": "NRARB05A3", "clasificacion": "CDO"}, {"activo": "NRARB05B1", "clasificacion": "CDO"}, {"activo": "NRARB05C1", "clasificacion": "CDO"}, {"activo": "NRARB05C3", "clasificacion": "CDO"}, {"activo": "NRARB05D1", "clasificacion": "CDO"}, {"activo": "NRARB05E1", "clasificacion": "CDO"}, {"activo": "NRARB05F1", "clasificacion": "CDO"}, {"activo": "NRARB05F3", "clasificacion": "CDO"}, {"activo": "NRARB06A1", "clasificacion": "CDO"}, {"activo": "NRARB06B1", "clasificacion": "CDO"}, {"activo": "NRARB06B3", "clasificacion": "CDO"}, {"activo": "NRARB06C1", "clasificacion": "CDO"}, {"activo": "NRARB06D1", "clasificacion": "CDO"}, {"activo": "NRARB07A1", "clasificacion": "CDO"}, {"activo": "NRARB07A3", "clasificacion": "CDO"}, {"activo": "NRARB07B1", "clasificacion": "CDO"}, {"activo": "NRARB08A1", "clasificacion": "CDO"}, {"activo": "NRARB08B1", "clasificacion": "CDO"}, {"activo": "NRARB08B3", "clasificacion": "CDO"}, {"activo": "NRARB08C1", "clasificacion": "CDO"}, {"activo": "NRARB09A1", "clasificacion": "CDO"}, {"activo": "NRARB09A3", "clasificacion": "CDO"}, {"activo": "NRARB09B1", "clasificacion": "CDO"}, {"activo": "NRARB10A1", "clasificacion": "CDO"}, {"activo": "NRARB10B1", "clasificacion": "CDO"}, {"activo": "NRARB10C1", "clasificacion": "CDO"}, {"activo": "NRARB10D1", "clasificacion": "CDO"}, {"activo": "NRARB11A1", "clasificacion": "CDO"}, {"activo": "NRARB11B1", "clasificacion": "CDO"}, {"activo": "NRARB11C1", "clasificacion": "CDO"}, {"activo": "NRARB12A1", "clasificacion": "CDO"}, {"activo": "NRARB12B1", "clasificacion": "CDO"}, {"activo": "NRARB13A1", "clasificacion": "CDO"}, {"activo": "NRARB13B1", "clasificacion": "CDO"}, {"activo": "NRARB14A1", "clasificacion": "CDO"}, {"activo": "NRARC01A1", "clasificacion": "CDO"}, {"activo": "NRARC02A1", "clasificacion": "CDO"}, {"activo": "NRARC03A1", "clasificacion": "CDO"}, {"activo": "NRARC03A3", "clasificacion": "CDO"}, {"activo": "NRARC04A1", "clasificacion": "CDO"}, {"activo": "NRARC05A1", "clasificacion": "CDO"}, {"activo": "NRARC05A3", "clasificacion": "CDO"}, {"activo": "NRARC05B1", "clasificacion": "CDO"}, {"activo": "NRARC05B3", "clasificacion": "CDO"}, {"activo": "NRARC05C1", "clasificacion": "CDO"}, {"activo": "NRARC06A1", "clasificacion": "CDO"}, {"activo": "NRARC06B1", "clasificacion": "CDO"}, {"activo": "NRARC07A1", "clasificacion": "CDO"}, {"activo": "NRARC07B1", "clasificacion": "CDO"}, {"activo": "NRARC08A1", "clasificacion": "CDO"}, {"activo": "NRARC08B1", "clasificacion": "CDO"}, {"activo": "NRARC09A1", "clasificacion": "CDO"}, {"activo": "NRARC10A1", "clasificacion": "CDO"}, {"activo": "NRARC11A1", "clasificacion": "CDO"}, {"activo": "NRARC12A1", "clasificacion": "CDO"}, {"activo": "NRARC13A1", "clasificacion": "CDO"}, {"activo": "NRARC13A3", "clasificacion": "CDO"}, {"activo": "NRARC14A1", "clasificacion": "CDO"}, {"activo": "NRARC15A1", "clasificacion": "CDO"}, {"activo": "NRARD01A1", "clasificacion": "CDO"}, {"activo": "NRARD01B1", "clasificacion": "CDO"}, {"activo": "NRARD02A1", "clasificacion": "CDO"}, {"activo": "NRARD02B1", "clasificacion": "CDO"}, {"activo": "NRARD03A1", "clasificacion": "CDO"}, {"activo": "NRARD03B1", "clasificacion": "CDO"}, {"activo": "NRARD04A1", "clasificacion": "CDO"}, {"activo": "NRARD04A3", "clasificacion": "CDO"}, {"activo": "NRARD05A1", "clasificacion": "CDO"}, {"activo": "NRARD05A3", "clasificacion": "CDO"}, {"activo": "NRARD06A1", "clasificacion": "CDO"}, {"activo": "NRARD06D4", "clasificacion": "CDO"}, {"activo": "NRARD07A1", "clasificacion": "CDO"}, {"activo": "NRARD07B1", "clasificacion": "CDO"}, {"activo": "NRARD08A1", "clasificacion": "CDO"}, {"activo": "NRARD09A1", "clasificacion": "CDO"}, {"activo": "NRARD09B1", "clasificacion": "CDO"}, {"activo": "NRARD10A1", "clasificacion": "CDO"}, {"activo": "NRARD10B1", "clasificacion": "CDO"}, {"activo": "NRARD11A1", "clasificacion": "CDO"}, {"activo": "NRARD11A3", "clasificacion": "CDO"}, {"activo": "NRARD12A1", "clasificacion": "CDO"}, {"activo": "NRARD12B1", "clasificacion": "CDO"}, {"activo": "NRARD13A1", "clasificacion": "CDO"}, {"activo": "NRARD14A1", "clasificacion": "CDO"}, {"activo": "NRARA01A1", "clasificacion": "CDO"}, {"activo": "NRARA01B1", "clasificacion": "CDO"}, {"activo": "NRARA01C1", "clasificacion": "CDO"}, {"activo": "NRARA02A1", "clasificacion": "CDO"}, {"activo": "NRARA02B1", "clasificacion": "CDO"}, {"activo": "NRARA02B3", "clasificacion": "CDO"}, {"activo": "NRARA02C1", "clasificacion": "CDO"}, {"activo": "NRARA02D1", "clasificacion": "CDO"}, {"activo": "NRARA03A1", "clasificacion": "CDO"}, {"activo": "NRARA03B1", "clasificacion": "CDO"}, {"activo": "NRARA04A1", "clasificacion": "CDO"}, {"activo": "NRARA04A3", "clasificacion": "CDO"}, {"activo": "NRARA05A1", "clasificacion": "CDO"}, {"activo": "NRARA05A3", "clasificacion": "CDO"}, {"activo": "NRARA06A1", "clasificacion": "CDO"}, {"activo": "NRARA06B1", "clasificacion": "CDO"}, {"activo": "NRARA06C1", "clasificacion": "CDO"}, {"activo": "NRARA06D1", "clasificacion": "CDO"}, {"activo": "NRARA06E1", "clasificacion": "CDO"}, {"activo": "NRARA06E3", "clasificacion": "CDO"}, {"activo": "NRARA07A1", "clasificacion": "CDO"}, {"activo": "NRARA07B1", "clasificacion": "CDO"}, {"activo": "NRARA07B3", "clasificacion": "CDO"}, {"activo": "NRARA07C1", "clasificacion": "CDO"}, {"activo": "NRARA07C3", "clasificacion": "CDO"}, {"activo": "NRARA07D1", "clasificacion": "CDO"}, {"activo": "NRARA08A1", "clasificacion": "CDO"}, {"activo": "NRARA08B1", "clasificacion": "CDO"}, {"activo": "NRARA08C1", "clasificacion": "CDO"}, {"activo": "NRARA08D1", "clasificacion": "CDO"}, {"activo": "NRARA09A1", "clasificacion": "CDO"}, {"activo": "NRARA09B1", "clasificacion": "CDO"}, {"activo": "NRARA10A1", "clasificacion": "CDO"}, {"activo": "NRARA10A3", "clasificacion": "CDO"}, {"activo": "NRARA10B1", "clasificacion": "CDO"}, {"activo": "NRARA10C1", "clasificacion": "CDO"}, {"activo": "NRARA11A1", "clasificacion": "CDO"}, {"activo": "NRARA11B1", "clasificacion": "CDO"}, {"activo": "NRARA11B3", "clasificacion": "CDO"}, {"activo": "NRARA11C1", "clasificacion": "CDO"}, {"activo": "NRARA11D1", "clasificacion": "CDO"}, {"activo": "NRARA12A1", "clasificacion": "CDO"}, {"activo": "NRARA12B1", "clasificacion": "CDO"}, {"activo": "NRARA12C1", "clasificacion": "CDO"}, {"activo": "NRARA12C3", "clasificacion": "CDO"}, {"activo": "NRARA12D1", "clasificacion": "CDO"}, {"activo": "NRARA12D3", "clasificacion": "CDO"}, {"activo": "NRARA13A1", "clasificacion": "CDO"}, {"activo": "NRARA13A3", "clasificacion": "CDO"}, {"activo": "NRARA13B1", "clasificacion": "CDO"}, {"activo": "NRARA13B3", "clasificacion": "CDO"}, {"activo": "NRARA13C1", "clasificacion": "CDO"}, {"activo": "NRARA13C3", "clasificacion": "CDO"}, {"activo": "NRARA14A1", "clasificacion": "CDO"}, {"activo": "NRARA14B1", "clasificacion": "CDO"}, {"activo": "NRARA14B3", "clasificacion": "CDO"}, {"activo": "NRARA15A1", "clasificacion": "CDO"}, {"activo": "NRARA15B1", "clasificacion": "CDO"}, {"activo": "NRARB01A1", "clasificacion": "CDO"}, {"activo": "NRARB01A3", "clasificacion": "CDO"}, {"activo": "NRARB01B1", "clasificacion": "CDO"}, {"activo": "NRARB01C1", "clasificacion": "CDO"}, {"activo": "NRARB01D1", "clasificacion": "CDO"}, {"activo": "NRARB01E1", "clasificacion": "CDO"}, {"activo": "NRARB02A1", "clasificacion": "CDO"}, {"activo": "NRARB02B1", "clasificacion": "CDO"}, {"activo": "NRARB02B3", "clasificacion": "CDO"}, {"activo": "NRARB02C1", "clasificacion": "CDO"}, {"activo": "NRARB02D1", "clasificacion": "CDO"}, {"activo": "NRARB02E1", "clasificacion": "CDO"}, {"activo": "NRARB02H2", "clasificacion": "CDO"}, {"activo": "NRARB03A1", "clasificacion": "CDO"}, {"activo": "NRARB03B1", "clasificacion": "CDO"}, {"activo": "NRARB03C1", "clasificacion": "CDO"}, {"activo": "NRARB03D1", "clasificacion": "CDO"}, {"activo": "NRARB04A1", "clasificacion": "CDO"}, {"activo": "NRARB04B1", "clasificacion": "CDO"}, {"activo": "NRARB04B2", "clasificacion": "CDO"}, {"activo": "NRARB04C1", "clasificacion": "CDO"}, {"activo": "NRARB04D1", "clasificacion": "CDO"}, {"activo": "NRARB04E1", "clasificacion": "CDO"}, {"activo": "NRARB04E3", "clasificacion": "CDO"}, {"activo": "NRARB04F1", "clasificacion": "CDO"}, {"activo": "NRARB04F3", "clasificacion": "CDO"}, {"activo": "NRARB04G1", "clasificacion": "CDO"}, {"activo": "NRARB05A1", "clasificacion": "CDO"}, {"activo": "NRARB05A3", "clasificacion": "CDO"}, {"activo": "NRARB05B1", "clasificacion": "CDO"}, {"activo": "NRARB05C1", "clasificacion": "CDO"}, {"activo": "NRARB05C3", "clasificacion": "CDO"}, {"activo": "NRARB05D1", "clasificacion": "CDO"}, {"activo": "NRARB05E1", "clasificacion": "CDO"}, {"activo": "NRARB05F1", "clasificacion": "CDO"}, {"activo": "NRARB05F3", "clasificacion": "CDO"}, {"activo": "NRARB06A1", "clasificacion": "CDO"}, {"activo": "NRARB06B1", "clasificacion": "CDO"}, {"activo": "NRARB06B3", "clasificacion": "CDO"}, {"activo": "NRARB06C1", "clasificacion": "CDO"}, {"activo": "NRARB06D1", "clasificacion": "CDO"}, {"activo": "NRARB07A1", "clasificacion": "CDO"}, {"activo": "NRARB07A3", "clasificacion": "CDO"}, {"activo": "NRARB07B1", "clasificacion": "CDO"}, {"activo": "NRARB08A1", "clasificacion": "CDO"}, {"activo": "NRARB08B1", "clasificacion": "CDO"}, {"activo": "NRARB08B3", "clasificacion": "CDO"}, {"activo": "NRARB08C1", "clasificacion": "CDO"}, {"activo": "NRARB09A1", "clasificacion": "CDO"}, {"activo": "NRARB09A3", "clasificacion": "CDO"}, {"activo": "NRARB09B1", "clasificacion": "CDO"}, {"activo": "NRARB10A1", "clasificacion": "CDO"}, {"activo": "NRARB10B1", "clasificacion": "CDO"}, {"activo": "NRARB10C1", "clasificacion": "CDO"}, {"activo": "NRARB10D1", "clasificacion": "CDO"}, {"activo": "NRARB11A1", "clasificacion": "CDO"}, {"activo": "NRARB11B1", "clasificacion": "CDO"}, {"activo": "NRARB11C1", "clasificacion": "CDO"}, {"activo": "NRARB12A1", "clasificacion": "CDO"}, {"activo": "NRARB12B1", "clasificacion": "CDO"}, {"activo": "NRARB13A1", "clasificacion": "CDO"}, {"activo": "NRARB13B1", "clasificacion": "CDO"}, {"activo": "NRARB14A1", "clasificacion": "CDO"}, {"activo": "NRARC01A1", "clasificacion": "CDO"}, {"activo": "NRARC02A1", "clasificacion": "CDO"}, {"activo": "NRARC03A1", "clasificacion": "CDO"}, {"activo": "NRARC03A3", "clasificacion": "CDO"}, {"activo": "NRARC04A1", "clasificacion": "CDO"}, {"activo": "NRARC05A1", "clasificacion": "CDO"}, {"activo": "NRARC05A3", "clasificacion": "CDO"}, {"activo": "NRARC05B1", "clasificacion": "CDO"}, {"activo": "NRARC05B3", "clasificacion": "CDO"}, {"activo": "NRARC05C1", "clasificacion": "CDO"}, {"activo": "NRARC06A1", "clasificacion": "CDO"}, {"activo": "NRARC06B1", "clasificacion": "CDO"}, {"activo": "NRARC07A1", "clasificacion": "CDO"}, {"activo": "NRARC07B1", "clasificacion": "CDO"}, {"activo": "NRARC08A1", "clasificacion": "CDO"}, {"activo": "NRARC08B1", "clasificacion": "CDO"}, {"activo": "NRARC09A1", "clasificacion": "CDO"}, {"activo": "NRARC10A1", "clasificacion": "CDO"}, {"activo": "NRARC11A1", "clasificacion": "CDO"}, {"activo": "NRARC12A1", "clasificacion": "CDO"}, {"activo": "NRARC13A1", "clasificacion": "CDO"}, {"activo": "NRARC13A3", "clasificacion": "CDO"}, {"activo": "NRARC14A1", "clasificacion": "CDO"}, {"activo": "NRARC15A1", "clasificacion": "CDO"}, {"activo": "NRARD01A1", "clasificacion": "CDO"}, {"activo": "NRARD01B1", "clasificacion": "CDO"}, {"activo": "NRARD02A1", "clasificacion": "CDO"}, {"activo": "NRARD02B1", "clasificacion": "CDO"}, {"activo": "NRARD03A1", "clasificacion": "CDO"}, {"activo": "NRARD03B1", "clasificacion": "CDO"}, {"activo": "NRARD04A1", "clasificacion": "CDO"}, {"activo": "NRARD04A3", "clasificacion": "CDO"}, {"activo": "NRARD05A1", "clasificacion": "CDO"}, {"activo": "NRARD05A3", "clasificacion": "CDO"}, {"activo": "NRARD06A1", "clasificacion": "CDO"}, {"activo": "NRARD06D4", "clasificacion": "CDO"}, {"activo": "NRARD07A1", "clasificacion": "CDO"}, {"activo": "NRARD07B1", "clasificacion": "CDO"}, {"activo": "NRARD08A1", "clasificacion": "CDO"}, {"activo": "NRARD09A1", "clasificacion": "CDO"}, {"activo": "NRARD09B1", "clasificacion": "CDO"}, {"activo": "NRARD10A1", "clasificacion": "CDO"}, {"activo": "NRARD10B1", "clasificacion": "CDO"}, {"activo": "NRARD11A1", "clasificacion": "CDO"}, {"activo": "NRARD11A3", "clasificacion": "CDO"}, {"activo": "NRARD12A1", "clasificacion": "CDO"}, {"activo": "NRARD12B1", "clasificacion": "CDO"}, {"activo": "NRARD13A1", "clasificacion": "CDO"}, {"activo": "NRARD14A1", "clasificacion": "CDO"}, {"activo": "NRARA01 - A-B", "clasificacion": "NAP"}, {"activo": "NRARA01 - C-D", "clasificacion": "NAP"}, {"activo": "NRARA02 - A-B", "clasificacion": "NAP"}, {"activo": "NRARA02 - C-D", "clasificacion": "NAP"}, {"activo": "NRARA02 - E-F", "clasificacion": "NAP"}, {"activo": "NRARA02 - PRECO - I", "clasificacion": "NAP"}, {"activo": "NRARA03 - A-B", "clasificacion": "NAP"}, {"activo": "NRARA03 - C-D", "clasificacion": "NAP"}, {"activo": "NRARA03 - PRECO - I", "clasificacion": "NAP"}, {"activo": "NRARA04 - A-B", "clasificacion": "NAP"}, {"activo": "NRARA04 - C-D", "clasificacion": "NAP"}, {"activo": "NRARA04 - PRECO - I", "clasificacion": "NAP"}, {"activo": "NRARA05 - A-B", "clasificacion": "NAP"}, {"activo": "NRARA05 - C-D", "clasificacion": "NAP"}, {"activo": "NRARA06 - A-B", "clasificacion": "NAP"}, {"activo": "NRARA06 - C-D", "clasificacion": "NAP"}, {"activo": "NRARA06 - E-F", "clasificacion": "NAP"}, {"activo": "NRARA07 - A-B", "clasificacion": "NAP"}, {"activo": "NRARA07 - C-D", "clasificacion": "NAP"}, {"activo": "NRARA07 - E-F", "clasificacion": "NAP"}, {"activo": "NRARA08 - A-B", "clasificacion": "NAP"}, {"activo": "NRARA08 - C-D", "clasificacion": "NAP"}, {"activo": "NRARA08 - E-F", "clasificacion": "NAP"}, {"activo": "NRARA09 - A-B", "clasificacion": "NAP"}, {"activo": "NRARA09 - C-D", "clasificacion": "NAP"}, {"activo": "NRARA10 - A-B", "clasificacion": "NAP"}, {"activo": "NRARA10 - C-D", "clasificacion": "NAP"}, {"activo": "NRARA10 - E-F", "clasificacion": "NAP"}, {"activo": "NRARA11 - A-B", "clasificacion": "NAP"}, {"activo": "NRARA11 - C-D", "clasificacion": "NAP"}, {"activo": "NRARA11 - E-F", "clasificacion": "NAP"}, {"activo": "NRARA11 - PRECO - I", "clasificacion": "NAP"}, {"activo": "NRARA12 - A-B", "clasificacion": "NAP"}, {"activo": "NRARA12 - C-D", "clasificacion": "NAP"}, {"activo": "NRARA12 - E-F", "clasificacion": "NAP"}, {"activo": "NRARA12 - PRECO - I", "clasificacion": "NAP"}, {"activo": "NRARA13 - A-B", "clasificacion": "NAP"}, {"activo": "NRARA13 - C-D", "clasificacion": "NAP"}, {"activo": "NRARA13 - PRECO - I", "clasificacion": "NAP"}, {"activo": "NRARA14 - A-B", "clasificacion": "NAP"}, {"activo": "NRARA14 - C-D", "clasificacion": "NAP"}, {"activo": "NRARA14 - PRECO - I", "clasificacion": "NAP"}, {"activo": "NRARA15 - A-B", "clasificacion": "NAP"}, {"activo": "NRARA15 - C-D", "clasificacion": "NAP"}, {"activo": "NRARB01 - A-B", "clasificacion": "NAP"}, {"activo": "NRARB01 - C-D", "clasificacion": "NAP"}, {"activo": "NRARB01 - E-F", "clasificacion": "NAP"}, {"activo": "NRARB02 - A-B", "clasificacion": "NAP"}, {"activo": "NRARB02 - C-D", "clasificacion": "NAP"}, {"activo": "NRARB02 - E-F", "clasificacion": "NAP"}, {"activo": "NRARB02 - G-H", "clasificacion": "NAP"}, {"activo": "NRARB03 - A-B", "clasificacion": "NAP"}, {"activo": "NRARB03 - C-D", "clasificacion": "NAP"}, {"activo": "NRARB04 - A-B", "clasificacion": "NAP"}, {"activo": "NRARB04 - C-D", "clasificacion": "NAP"}, {"activo": "NRARB04 - E-F", "clasificacion": "NAP"}, {"activo": "NRARB04 - G-H", "clasificacion": "NAP"}, {"activo": "NRARB05 - A-B", "clasificacion": "NAP"}, {"activo": "NRARB05 - C-D", "clasificacion": "NAP"}, {"activo": "NRARB05 - E-F", "clasificacion": "NAP"}, {"activo": "NRARB05 - G-H", "clasificacion": "NAP"}, {"activo": "NRARB05 - PRECO - I", "clasificacion": "NAP"}, {"activo": "NRARB06 - A-B", "clasificacion": "NAP"}, {"activo": "NRARB06 - C-D", "clasificacion": "NAP"}, {"activo": "NRARB06 - PRECO - I", "clasificacion": "NAP"}, {"activo": "NRARB07 - A-B", "clasificacion": "NAP"}, {"activo": "NRARB07 - C-D", "clasificacion": "NAP"}, {"activo": "NRARB07 - E-F", "clasificacion": "NAP"}, {"activo": "NRARB08 - A-B", "clasificacion": "NAP"}, {"activo": "NRARB08 - C-D", "clasificacion": "NAP"}, {"activo": "NRARB08 - E-F", "clasificacion": "NAP"}, {"activo": "NRARB09 - A-B", "clasificacion": "NAP"}, {"activo": "NRARB09 - C-D", "clasificacion": "NAP"}, {"activo": "NRARB09 - E-F", "clasificacion": "NAP"}, {"activo": "NRARB10 - A-B", "clasificacion": "NAP"}, {"activo": "NRARB10 - C-D", "clasificacion": "NAP"}, {"activo": "NRARB11 - A-B", "clasificacion": "NAP"}, {"activo": "NRARB11 - C-D", "clasificacion": "NAP"}, {"activo": "NRARB11 - E-F", "clasificacion": "NAP"}, {"activo": "NRARB11 - PRECO - I", "clasificacion": "NAP"}, {"activo": "NRARB12 - A-B", "clasificacion": "NAP"}, {"activo": "NRARB12 - C-D", "clasificacion": "NAP"}, {"activo": "NRARB12 - E-F", "clasificacion": "NAP"}, {"activo": "NRARB13 - A-B", "clasificacion": "NAP"}, {"activo": "NRARB13 - C-D", "clasificacion": "NAP"}, {"activo": "NRARB13 - E-F", "clasificacion": "NAP"}, {"activo": "NRARB14 - A-B", "clasificacion": "NAP"}, {"activo": "NRARB14 - C-D", "clasificacion": "NAP"}, {"activo": "NRARC01 - A-B", "clasificacion": "NAP"}, {"activo": "NRARC01 - C-D", "clasificacion": "NAP"}, {"activo": "NRARC01 - E-F", "clasificacion": "NAP"}, {"activo": "NRARC01 - G-H", "clasificacion": "NAP"}, {"activo": "NRARC01 - PRECO - I", "clasificacion": "NAP"}, {"activo": "NRARC02 - A-B", "clasificacion": "NAP"}, {"activo": "NRARC02 - C-D", "clasificacion": "NAP"}, {"activo": "NRARC02 - E-F", "clasificacion": "NAP"}, {"activo": "NRARC02 - PRECO - I", "clasificacion": "NAP"}, {"activo": "NRARC03 - A-B", "clasificacion": "NAP"}, {"activo": "NRARC03 - C-D", "clasificacion": "NAP"}, {"activo": "NRARC04 - A-B", "clasificacion": "NAP"}, {"activo": "NRARC04 - C-D", "clasificacion": "NAP"}, {"activo": "NRARC04 - PRECO - I", "clasificacion": "NAP"}, {"activo": "NRARC04 - PRECO - J", "clasificacion": "NAP"}, {"activo": "NRARC04 - FO DEDICADA", "clasificacion": "NAP"}, {"activo": "NRARC05 - A-B", "clasificacion": "NAP"}, {"activo": "NRARC05 - C-D", "clasificacion": "NAP"}, {"activo": "NRARC05 - E-F", "clasificacion": "NAP"}, {"activo": "NRARC05 - PRECO - I", "clasificacion": "NAP"}, {"activo": "NRARC05 - PRECO - J", "clasificacion": "NAP"}, {"activo": "NRARC06 - A-B", "clasificacion": "NAP"}, {"activo": "NRARC06 - C-D", "clasificacion": "NAP"}, {"activo": "NRARC06 - PRECO - I", "clasificacion": "NAP"}, {"activo": "NRARC07 - A-B", "clasificacion": "NAP"}, {"activo": "NRARC07 - C-D", "clasificacion": "NAP"}, {"activo": "NRARC07 - FO DEDICADA", "clasificacion": "NAP"}, {"activo": "NRARC07 - FO DEDICADA", "clasificacion": "NAP"}, {"activo": "NRARC08 - A-B", "clasificacion": "NAP"}, {"activo": "NRARC08 - C-D", "clasificacion": "NAP"}, {"activo": "NRARC08 - E-F", "clasificacion": "NAP"}, {"activo": "NRARC09 - A-B", "clasificacion": "NAP"}, {"activo": "NRARC09 - C-D", "clasificacion": "NAP"}, {"activo": "NRARC09 - E-F", "clasificacion": "NAP"}, {"activo": "NRARC09 - PRECO - I", "clasificacion": "NAP"}, {"activo": "NRARC09 - FO DEDICADA", "clasificacion": "NAP"}, {"activo": "NRARC09 - FO DEDICADA", "clasificacion": "NAP"}, {"activo": "NRARC10 - A-B", "clasificacion": "NAP"}, {"activo": "NRARC10 - C-D", "clasificacion": "NAP"}, {"activo": "NRARC10 - E-F", "clasificacion": "NAP"}, {"activo": "NRARC11 - A-B", "clasificacion": "NAP"}, {"activo": "NRARC11 - C-D", "clasificacion": "NAP"}, {"activo": "NRARC11 - E-F", "clasificacion": "NAP"}, {"activo": "NRARC12 - A-B", "clasificacion": "NAP"}, {"activo": "NRARC12 - C-D", "clasificacion": "NAP"}, {"activo": "NRARC12 - PRECO - I", "clasificacion": "NAP"}, {"activo": "NRARC13 - A-B", "clasificacion": "NAP"}, {"activo": "NRARC13 - C-D", "clasificacion": "NAP"}, {"activo": "NRARC13 - E-F", "clasificacion": "NAP"}, {"activo": "NRARC13 - PRECO - I", "clasificacion": "NAP"}, {"activo": "NRARC13 - FO DEDICADA", "clasificacion": "NAP"}, {"activo": "NRARC13 - FO DEDICADA", "clasificacion": "NAP"}, {"activo": "NRARC13 - FO DEDICADA", "clasificacion": "NAP"}, {"activo": "NRARC14 - A-B", "clasificacion": "NAP"}, {"activo": "NRARC14 - C-D", "clasificacion": "NAP"}, {"activo": "NRARC14 - PRECO - I", "clasificacion": "NAP"}, {"activo": "NRARC14 - PRECO - J", "clasificacion": "NAP"}, {"activo": "NRARC14 - FO DEDICADA", "clasificacion": "NAP"}, {"activo": "NRARC15 - A-B", "clasificacion": "NAP"}, {"activo": "NRARC15 - C-D", "clasificacion": "NAP"}, {"activo": "NRARC15 - E-F", "clasificacion": "NAP"}, {"activo": "NRARC15 - PRECO - I", "clasificacion": "NAP"}, {"activo": "NRARC15 - PRECO - J", "clasificacion": "NAP"}, {"activo": "NRARC15 - FO DEDICADA", "clasificacion": "NAP"}, {"activo": "NRARD01 - A-B", "clasificacion": "NAP"}, {"activo": "NRARD01 - C-D", "clasificacion": "NAP"}, {"activo": "NRARD01 - E-F", "clasificacion": "NAP"}, {"activo": "NRARD01 - G-H", "clasificacion": "NAP"}, {"activo": "NRARD02 - A-B", "clasificacion": "NAP"}, {"activo": "NRARD02 - C-D", "clasificacion": "NAP"}, {"activo": "NRARD02 - E-F", "clasificacion": "NAP"}, {"activo": "NRARD02 - G-H", "clasificacion": "NAP"}, {"activo": "NRARD03 - A-B", "clasificacion": "NAP"}, {"activo": "NRARD03 - PRECO - I", "clasificacion": "NAP"}, {"activo": "NRARD04 - A-B", "clasificacion": "NAP"}, {"activo": "NRARD04 - C-D", "clasificacion": "NAP"}, {"activo": "NRARD04 - PRECO - I", "clasificacion": "NAP"}, {"activo": "NRARD05 - A-B", "clasificacion": "NAP"}, {"activo": "NRARD05 - C-D", "clasificacion": "NAP"}, {"activo": "NRARD06 - A-B", "clasificacion": "NAP"}, {"activo": "NRARD06 - C-D", "clasificacion": "NAP"}, {"activo": "NRARD06 - E-F", "clasificacion": "NAP"}, {"activo": "NRARD06 - G-H", "clasificacion": "NAP"}, {"activo": "NRARD06 - PRECO - I", "clasificacion": "NAP"}, {"activo": "NRARD06 - PRECO - J", "clasificacion": "NAP"}, {"activo": "NRARD07 - A-B", "clasificacion": "NAP"}, {"activo": "NRARD07 - C-D", "clasificacion": "NAP"}, {"activo": "NRARD07 - E-F", "clasificacion": "NAP"}, {"activo": "NRARD07 - PRECO - I", "clasificacion": "NAP"}, {"activo": "NRARD08 - A-B", "clasificacion": "NAP"}, {"activo": "NRARD08 - C-D", "clasificacion": "NAP"}, {"activo": "NRARD08 - E-F", "clasificacion": "NAP"}, {"activo": "NRARD08 - PRECO - I", "clasificacion": "NAP"}, {"activo": "NRARD09 - A-B", "clasificacion": "NAP"}, {"activo": "NRARD09 - C-D", "clasificacion": "NAP"}, {"activo": "NRARD09 - E-F", "clasificacion": "NAP"}, {"activo": "NRARD09 - G-H", "clasificacion": "NAP"}, {"activo": "NRARD09 - PRECO - I", "clasificacion": "NAP"}, {"activo": "NRARD10 - A-B", "clasificacion": "NAP"}, {"activo": "NRARD10 - C-D", "clasificacion": "NAP"}, {"activo": "NRARD10 - E-F", "clasificacion": "NAP"}, {"activo": "NRARD10 - G-H", "clasificacion": "NAP"}, {"activo": "NRARD10 - PRECO - I", "clasificacion": "NAP"}, {"activo": "NRARD11 - A-B", "clasificacion": "NAP"}, {"activo": "NRARD11 - C-D", "clasificacion": "NAP"}, {"activo": "NRARD11 - E-F", "clasificacion": "NAP"}, {"activo": "NRARD11 - PRECO - I", "clasificacion": "NAP"}, {"activo": "NRARD11 - PRECO - J", "clasificacion": "NAP"}, {"activo": "NRARD12 - A-B", "clasificacion": "NAP"}, {"activo": "NRARD12 - C-D", "clasificacion": "NAP"}, {"activo": "NRARD12 - E-F", "clasificacion": "NAP"}, {"activo": "NRARD12 - G-H", "clasificacion": "NAP"}, {"activo": "NRARD13 - A-B", "clasificacion": "NAP"}, {"activo": "NRARD13 - PRECO - I", "clasificacion": "NAP"}, {"activo": "NRARD13 - PRECO - J", "clasificacion": "NAP"}, {"activo": "NRARD14 - A-B", "clasificacion": "NAP"}, {"activo": "NRARD14 - PRECO - I", "clasificacion": "NAP"}, {"activo": "NRARD14 - PRECO - J", "clasificacion": "NAP"}, {"activo": "NRARD14 - FO DEDICADA", "clasificacion": "NAP"}];
 	const ALL_CLASSES = ["CDO", "NAP"];
 	const PROVIDER_KEY = "xanten";
-	const PROVIDER_NAME = "XANTEN";
 	const PIN_RESET = "3960";
 	const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxzC032PfHIuToqZav0S4TEY9Sm0vECzeGKooKPHj07Ime4JFHj1HgD6abEu3HVHC15UA/exec";
 
+	// Estado global
 	let items = INITIAL_ITEMS.map((x, idx) => ({ ...x, id: idFor(x), _idx: idx }));
-	let states = new Map(); 
+	let states = new Map(); // id -> state {estado, files:[], notes:[], gps:[], audit:[], validations:{}}
 	let selectedId = null;
+	let currentNoteItem = null;
 	let isOnline = navigator.onLine;
 
-	const listEl = document.getElementById('list');
+	// Referencias DOM
 	const q = document.getElementById('q');
-	
+	const clearSearch = document.getElementById('clearSearch');
+	const filterClasif = document.getElementById('filterClasif');
+	const filterEstado = document.getElementById('filterEstado');
+	const dateFrom = document.getElementById('dateFrom');
+	const dateTo = document.getElementById('dateTo');
+	const exportBtn = document.getElementById('exportBtn');
+	const listEl = document.getElementById('list');
+	const emptyMsg = document.getElementById('emptyMsg');
+	const errorBanner = document.getElementById('errorBanner');
+	const connectionStatus = document.getElementById('connectionStatus');
+	const lastUpdate = document.getElementById('lastUpdate');
+
+	// Estadísticas
+	const statTotal = document.getElementById('statTotal');
+	const statPendientes = document.getElementById('statPendientes');
+	const statMedidos = document.getElementById('statMedidos');
+	const statProgreso = document.getElementById('statProgreso');
+
+	// Mostrar error en UI
+	function showError(message) {
+		console.error(message);
+		errorBanner.textContent = 'Error: ' + message;
+		errorBanner.classList.remove('hidden');
+	}
+
+	// Firebase como única fuente de verdad - No más IndexedDB
 	function idFor(item) {
 		return PROVIDER_KEY + '::' + String(item.activo || '').trim();
 	}
 
-	function getCurrentTimestamp() { return new Date().toISOString(); }
-	function formatDate(dateStr) { return new Date(dateStr).toLocaleString('es-ES'); }
+	// Funciones de utilidad
+	function getCurrentTimestamp() {
+		return new Date().toISOString();
+	}
 
+	function formatDate(dateStr) {
+		return new Date(dateStr).toLocaleString('es-ES');
+	}
+
+	function addAuditLog(itemId, action, details = '') {
+		const st = states.get(itemId) || { estado: 'pendiente', files: [], notes: [], gps: [], audit: [], validations: {} };
+		st.audit = st.audit || [];
+		st.audit.push({
+			timestamp: getCurrentTimestamp(),
+			action: action,
+			details: details,
+			userAgent: navigator.userAgent.substring(0, 50)
+		});
+		states.set(itemId, st);
+	}
+
+	// Geolocalización
 	async function getCurrentLocation() {
 		return new Promise((resolve, reject) => {
-			if (!navigator.geolocation) return reject(new Error('Geolocalización no soportada'));
+			// Si no es contexto seguro (https o localhost), la geolocalización puede fallar
+			const isSecure = location.protocol === 'https:' || location.hostname === 'localhost' || location.protocol === 'file:';
+			if (!navigator.geolocation) {
+				reject(new Error('Geolocalización no soportada por el navegador'));
+				return;
+			}
+			if (!isSecure) {
+				reject(new Error('Geolocalización requiere HTTPS (o archivo local). Subiremos luego a hosting seguro.'));
+				return;
+			}
+			
 			navigator.geolocation.getCurrentPosition(
 				(position) => {
-					resolve({ lat: position.coords.latitude, lng: position.coords.longitude, accuracy: position.coords.accuracy });
+					resolve({
+						lat: position.coords.latitude,
+						lng: position.coords.longitude,
+						accuracy: position.coords.accuracy,
+						timestamp: getCurrentTimestamp()
+					});
 				},
-				(error) => { reject(new Error('Error al capturar GPS')); },
+				(error) => {
+					let msg = 'Error al capturar GPS';
+					if (error.code === error.PERMISSION_DENIED) msg = 'Permiso de ubicación denegado';
+					if (error.code === error.POSITION_UNAVAILABLE) msg = 'Posición no disponible';
+					if (error.code === error.TIMEOUT) msg = 'Tiempo de espera agotado';
+					reject(new Error(msg));
+				},
 				{ enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 }
 			);
 		});
 	}
 
+	// Validaciones de calidad
+	function validatePhotos(files) {
+		const validations = {
+			hasPhotos: files.length > 0,
+			hasMultipleAngles: files.length >= 2,
+			hasGoodQuality: true, // Simplificado por ahora
+			hasVideo: files.some(f => f.type && f.type.startsWith('video/')),
+			hasImages: files.some(f => f.type && f.type.startsWith('image/'))
+		};
+		
+		validations.score = Object.values(validations).filter(Boolean).length;
+		validations.percentage = Math.round((validations.score / Object.keys(validations).length) * 100);
+		
+		return validations;
+	}
+
+	// Exportar a CSV
+	function exportToCSV() {
+		const data = [];
+		for (const item of items) {
+			const st = states.get(item.id) || { estado: 'pendiente', files: [], notes: [], gps: [], audit: [], validations: {} };
+			data.push({
+				'Activo': item.activo,
+				'Clasificación': item.clasificacion,
+				'Estado': st.estado,
+				'Fotos Adjuntas': st.files?.length || 0,
+				'Notas': st.notes?.length || 0,
+				'Última Actualización': st.audit?.[st.audit.length - 1]?.timestamp || '',
+				'GPS': st.gps?.length > 0 ? `${st.gps[st.gps.length - 1].lat}, ${st.gps[st.gps.length - 1].lng}` : '',
+				'Validación': st.validations?.percentage || 0
+			});
+		}
+		
+		const csv = convertToCSV(data);
+		downloadCSV(csv, `mediciones_${PROVIDER_KEY}_${new Date().toISOString().split('T')[0]}.csv`);
+	}
+
+	function convertToCSV(data) {
+		if (data.length === 0) return '';
+		
+		const headers = Object.keys(data[0]);
+		const csvContent = [
+			headers.join(','),
+			...data.map(row => `"${headers.map(h => String(row[h] ?? '').replace(/"/g, '""')).join('","')}"`)
+		].join('\n');
+		
+		return csvContent;
+	}
+
+	function downloadCSV(csv, filename) {
+		const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+		const link = document.createElement('a');
+		const url = URL.createObjectURL(blob);
+		link.setAttribute('href', url);
+		link.setAttribute('download', filename);
+		link.style.visibility = 'hidden';
+		document.body.appendChild(link);
+		link.click();
+		document.body.removeChild(link);
+	}
+
+	// Filtros avanzados
+	function matchesAdvancedFilters(item) {
+		const st = states.get(item.id);
+		
+		// Filtro por fecha
+		if (dateFrom.value || dateTo.value) {
+			const lastUpdate = st?.audit?.[st.audit.length - 1]?.timestamp;
+			if (!lastUpdate) return false;
+			
+			const itemDate = new Date(lastUpdate);
+			if (dateFrom.value && itemDate < new Date(dateFrom.value)) return false;
+			if (dateTo.value && itemDate > new Date(dateTo.value)) return false;
+		}
+		
+		return true;
+	}
+
+	// Actualizar estadísticas
+	function updateStats() {
+		const total = items.length;
+		const pendientes = items.filter(it => {
+			const st = states.get(it.id);
+			return (st?.estado || 'pendiente') === 'pendiente';
+		}).length;
+		const rechazados = items.filter(it => {
+			const st = states.get(it.id);
+			return st?.observacion_rechazo ? true : false;
+		}).length;
+		const medidos = items.filter(it => {
+			const st = states.get(it.id);
+			return (st?.estado || 'pendiente') === 'medido';
+		}).length;
+		const totalEnviados = medidos + rechazados;
+		const aprobacion = totalEnviados > 0 ? Math.round((medidos / totalEnviados) * 100) : 0;
+		const progreso = total > 0 ? Math.round((medidos / total) * 100) : 0;
+		
+		statTotal.textContent = total;
+		statPendientes.textContent = pendientes;
+		statMedidos.textContent = medidos;
+		document.getElementById('statRechazados').textContent = rechazados;
+		document.getElementById('statAprobacion').textContent = aprobacion + '%';
+		statProgreso.textContent = progreso + '%';
+	}
+
+	// Renderizado
+	function hydrateFilters() {
+		for (const c of ALL_CLASSES) {
+			const opt = document.createElement('option');
+			opt.value = c; opt.textContent = c; filterClasif.appendChild(opt);
+		}
+	}
+
 	function render() {
 		const query = (q.value || '').toLowerCase();
-		const clasif = document.getElementById('filterClasif').value || '';
-		const est = document.getElementById('filterEstado').value || 'pendiente';
+		const clasif = filterClasif.value || '';
+		const est = filterEstado.value || 'pendiente';
 
 		const filtered = items.filter(it => {
 			const st = states.get(it.id);
 			const estado = st?.estado || 'pendiente';
+			
+			// Filtros básicos
 			if (est !== 'todos' && estado !== est) return false;
 			if (clasif && String(it.clasificacion || '').toLowerCase() !== clasif.toLowerCase()) return false;
+			
+			// Filtros avanzados
+			if (!matchesAdvancedFilters(it)) return false;
+			
+			// Búsqueda
 			if (!query) return true;
-			const searchText = [it.activo, it.clasificacion].join(' ').toLowerCase();
+			
+			// Buscar en activo, clasificación, notas
+			const searchText = [
+				it.activo,
+				it.clasificacion,
+				...(st?.notes || []).map(n => n.text),
+				...Object.values(it).map(v => String(v))
+			].join(' ').toLowerCase();
+			
 			return searchText.includes(query);
 		});
 
 		listEl.innerHTML = '';
+		if (filtered.length === 0) {
+			emptyMsg.textContent = 'No se encontraron activos con los filtros aplicados.';
+		} else {
+			emptyMsg.textContent = '';
+		}
 		for (const it of filtered) {
 			const st = states.get(it.id);
 			const estado = st?.estado || 'pendiente';
 			const isSelected = selectedId === it.id;
+			const validations = st?.validations || {};
 			
 			const div = document.createElement('div');
 			div.className = 'item';
 			const hasRechazo = st?.observacion_rechazo ? true : false;
 			
+			// Resaltar fila si está rechazada
 			if (hasRechazo) {
 				div.style.borderLeft = '4px solid var(--danger)';
 				div.style.background = '#1a0505';
@@ -322,130 +781,252 @@
 					<div class="item-header">
 						<strong>${it.activo || '(Sin Activo)'}</strong> 
 						<span class="badge ${estado === 'medido' ? 'badge-medido' : 'badge-pendiente'}">${it.clasificacion || ''}</span>
-						${hasRechazo ? '<span class="badge" style="background:var(--danger);color:#fff;font-weight:bold;">❌ RECHAZADA</span>' : ''}
+						${validations.percentage ? `<span class="badge">${validations.percentage}%</span>` : ''}
+						${hasRechazo ? '<span class="badge" style="background:var(--danger);color:#fff;font-weight:bold;">❌ MEDICIÓN RECHAZADA</span>' : ''}
 					</div>
-					<div class="item-meta">Estado: ${estado} | Fotos: ${st?.files?.length || 0}/1</div>
+					<div class="item-meta">
+						Estado: ${estado} | 
+						Fotos: ${st?.files?.length || 0}/1 | 
+						Notas: ${st?.notes?.length || 0} |
+						${st?.gps?.length ? '📍 GPS' : '❌ Sin GPS'}
+					</div>
 				</div>
 				<div class="item-actions">
 					<button class="secondary small" data-id="${it.id}" data-action="ver">${isSelected ? 'Ocultar' : 'Ver'}</button>
+					<button class="warning small" data-id="${it.id}" data-action="note">Nota</button>
 				</div>
 			`;
 			
+			// Panel de detalle
 			const detailDiv = document.createElement('div');
 			detailDiv.className = `item-detail ${isSelected ? 'expanded' : ''}`;
 			detailDiv.id = `detail-${it.id}`;
 			
-			if (isSelected) setTimeout(() => { renderDetail(it, detailDiv); }, 0);
+			if (isSelected) {
+				setTimeout(() => {
+					try { renderDetail(it, detailDiv); } catch (e) { showError(e.message || e); }
+				}, 0);
+			}
 			
 			listEl.appendChild(div);
 			listEl.appendChild(detailDiv);
 		}
 		
-		document.getElementById('statTotal').textContent = items.length;
+		updateStats();
 	}
 
-	function safeRender() { try { render(); } catch(e){} }
+	function safeRender() {
+		try {
+			render();
+		} catch (e) {
+			showError(e.message || e);
+		}
+	}
 
 	function renderDetail(it, container) {
 		const st = states.get(it.id) || { estado: 'pendiente', files: [], notes: [], gps: [], audit: [], validations: {} };
+		const max = 1;
+		const rest = Math.max(0, max - (st.files?.length || 0));
+		const validations = validatePhotos(st.files || []);
 		const isReadOnly = st.estado === 'pendiente_revision' || st.estado === 'medido';
+		
+		// Determinar rango según clasificación
 		const esNAP = it.clasificacion && it.clasificacion.toUpperCase().includes('NAP');
 		const rangoTexto = esNAP ? '-3.50 a 5.00' : '-23.50 a 5.00';
 		const ejemploValor = esNAP ? '-2.45' : '-22.45';
+		const tipoEquipo = esNAP ? '(NAP)' : '(CDO)';
 		
 		container.innerHTML = `
 			<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
 				<div>
 					<h3>${it.activo || '(Sin Activo)'} <span class="badge">${it.clasificacion || ''}</span></h3>
+					<div class="small">${isReadOnly ? 'Medición en revisión o completada' : 'Adjunta 1 archivo (imagen o video)'}</div>
 			</div>
-			${!isReadOnly ? `<div style="display: flex; gap: 8px;">
-				<label class="btn attach" for="fileInput-${it.id}">📁 Adjuntar Foto</label>
-				<input id="fileInput-${it.id}" type="file" accept="image/*,video/*" />
+			${!isReadOnly ? `<div style="display: flex; gap: 8px; flex-wrap: wrap;">
+				<button class="success" onclick="capturarFoto('${it.id}')">📷 Tomar Foto</button>
+				<label class="btn attach" for="fileInput-${it.id}">📁 Adjuntar (${rest} restante${rest !== 1 ? 's' : ''})</label>
+				<input id="fileInput-${it.id}" type="file" accept="image/*,video/*" ${rest === 0 ? 'disabled' : ''} />
+				<input id="cameraInput-${it.id}" type="file" accept="image/*" capture="environment" style="display:none" />
 			</div>` : ''}
-			</div>			
-
-			<div id="rechazo-${it.id}" style="${st.observacion_rechazo ? 'display:block' : 'display:none'};background:#2d0a0a;border-left:4px solid var(--danger);padding:12px;margin-bottom:12px;">
-				<strong style="color:var(--danger);">❌ Rechazada:</strong> ${st.observacion_rechazo || ''}
+		</div>			<!-- Observación de rechazo (si existe) -->
+			<div id="rechazo-${it.id}" style="display:none;background:#2d0a0a;border-left:4px solid var(--danger);padding:12px;border-radius:6px;margin-bottom:12px;">
+				<strong style="color:var(--danger);">❌ Medición Rechazada</strong>
+				<div id="rechazo-text-${it.id}" style="margin-top:8px;color:var(--text);"></div>
 			</div>
 			
-			<div class="photo-section"><div class="thumb-grid" id="thumbs-${it.id}"></div></div>
-			
-			<div class="form-group">
-				<label>Valor de medición:</label>
-				<input id="valorMedicion-${it.id}" type="text" placeholder="Ej: ${ejemploValor}" maxlength="6" value="${st.valor_medicion || ''}" ${isReadOnly ? 'readonly' : ''} style="font-family: monospace;" />
-				<small class="small" style="color:var(--muted);display:block;margin-top:4px;">Rango: ${rangoTexto}</small>
+			<!-- Fotos -->
+			<div class="photo-section">
+				<div class="thumb-grid" id="thumbs-${it.id}"></div>
 			</div>
 			
-			${!isReadOnly ? `<div style="margin-top: 16px; display: flex; gap: 8px;">
-				<button id="markMedido-${it.id}" ${st.files?.length ? '' : 'disabled'} class="success">✅ Enviar a Revisión</button>
+			<!-- GPS -->
+			<div class="gps-info" id="gps-${it.id}">
+				<strong>📍 Ubicación:</strong> 
+				<span id="gps-coords-${it.id}">No capturada</span>
+				${!isReadOnly ? `<button class="small" onclick="captureGPS('${it.id}')">Capturar GPS</button>` : ''}
+			</div>
+			
+			<!-- Notas -->
+			<div class="notes-section">
+				<h4>Notas y Comentarios</h4>
+				<div id="notes-${it.id}"></div>
+			</div>
+			
+			<!-- Auditoría -->
+			<div class="audit-log">
+				<strong>Historial:</strong>
+				<div id="audit-${it.id}"></div>
+			</div>
+			
+		<!-- Valor de medición -->
+		<div class="form-group">
+			<label>Valor de medición:</label>
+			<input id="valorMedicion-${it.id}" type="text" placeholder="Ej: ${ejemploValor}" maxlength="6" value="${st.valor_medicion || ''}" ${isReadOnly ? 'readonly' : ''} style="font-family: monospace;" />
+			<small class="small" style="color:var(--muted);display:block;margin-top:4px;">Formato ${tipoEquipo}: ${rangoTexto} (ej: ${ejemploValor})</small>
+		</div>
+			
+			<!-- Acciones -->
+			${!isReadOnly ? `<div style="margin-top: 16px; display: flex; gap: 8px; flex-wrap: wrap;">
+				<button id="markMedido-${it.id}" ${st.files?.length ? '' : 'disabled'} class="success">
+					✅ Enviar a Revisión
+				</button>
 				<button class="danger" id="reset-${it.id}">🔄 Reiniciar</button>
-			</div>` : `<div style="margin-top: 16px; padding: 12px; background: #2d2d2d; text-align: center;"><strong>Estado: ${st.estado === 'pendiente_revision' ? '🟡 En Revisión' : '✅ Medido'}</strong></div>`}
+			</div>` : `<div style="margin-top: 16px; padding: 12px; background: #2d2d2d; border-radius: 6px; text-align: center;">
+				<strong>Estado: ${st.estado === 'pendiente_revision' ? '🟡 En Revisión' : '✅ Medido'}</strong>
+			</div>`}
 		`;
 
-		if (!isReadOnly) setupDetailEvents(it, container);
+		// Configurar eventos solo si no es readonly
+		if (!isReadOnly) {
+			setupDetailEvents(it, container);
+		}
+		
+		// Renderizar contenido existente
 		refreshThumbs(it.id, isReadOnly);
+		refreshNotes(it.id);
+		refreshGPS(it.id);
+		refreshAudit(it.id);
+		refreshRechazo(it.id);
+	}
+	
+	function refreshRechazo(itemId) {
+		const rechazoDiv = document.getElementById(`rechazo-${itemId}`);
+		const rechazoText = document.getElementById(`rechazo-text-${itemId}`);
+		if (!rechazoDiv || !rechazoText) return;
+		
+		const st = states.get(itemId);
+		if (st?.observacion_rechazo) {
+			rechazoText.innerHTML = `<strong>Fecha:</strong> ${st.fecha_rechazo ? new Date(st.fecha_rechazo).toLocaleString('es-ES') : 'N/A'}<br/><strong>Motivo:</strong> ${st.observacion_rechazo}`;
+			rechazoDiv.style.display = 'block';
+		} else {
+			rechazoDiv.style.display = 'none';
+		}
 	}
 
 	function setupDetailEvents(it, container) {
 		const input = document.getElementById(`fileInput-${it.id}`);
+		const cameraInput = document.getElementById(`cameraInput-${it.id}`);
 		const btnMedido = document.getElementById(`markMedido-${it.id}`);
 		const btnReset = document.getElementById(`reset-${it.id}`);
 		const valorMedicionInput = document.getElementById(`valorMedicion-${it.id}`);
 		
-		valorMedicionInput?.addEventListener('input', (e) => { formatearMedicion(e.target); });
+		// Event listener para formatear automáticamente el input de medición
+		valorMedicionInput?.addEventListener('input', (e) => {
+			formatearMedicion(e.target);
+		});
 		
-		input?.addEventListener('change', async (ev) => {
+		// Función compartida para procesar archivos (funciona para adjuntar Y capturar)
+		const processFiles = async (ev) => {
 			const files = Array.from(ev.target.files || []);
 			if (!files.length) return;
 			
-			const st = states.get(it.id) || { estado: 'pendiente', files: [], gps: [] };
-			if (st.files?.length >= 1) {
-				alert('Ya adjuntaste 1 foto. Elimínala para cambiarla.');
-				ev.target.value = ''; 
+			const st = states.get(it.id) || { estado: 'pendiente', files: [], notes: [], gps: [], audit: [], validations: {} };
+			const available = Math.max(0, 1 - (st.files?.length || 0));
+			
+			if (available === 0) {
+				alert('Ya adjuntaste 1 foto. Elimínala primero si deseas cambiarla.');
+				ev.target.value = ''; // Limpiar input
 				return;
 			}
 			
+			const take = files.slice(0, available);
+			
+			// Capturar GPS automáticamente (no bloqueante)
 			let lastGPS = null;
-			try { lastGPS = await getCurrentLocation(); st.gps.push(lastGPS); } catch {}
+			try { lastGPS = await getCurrentLocation(); st.gps = st.gps || []; st.gps.push(lastGPS); } catch {}
 			
-			const f = files[0];
-			const dataUrl = await new Promise(res => { const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(f); });
-			st.files = [{ name: f.name, type: f.type, dataUrl }];
-			
-			if (isOnline) {
-				try {
-					const up = await postForm(WEBAPP_URL, {
-						action: 'uploadPhoto', proveedor: PROVIDER_NAME, activo: it.activo,
-						fileName: f.name, mimeType: f.type, base64Data: dataUrl.split(',')[1],
-						gps_lat: lastGPS?.lat ?? '', gps_lng: lastGPS?.lng ?? ''
-					});
-					if (up?.success) st.remoteUrls = [up.thumbnailUrl];
-				} catch (e) { console.warn('Error upload', e); }
+			for (const f of take) {
+				// Guardado local siempre
+				const dataUrl = await new Promise(res => { const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(f); });
+				(st.files = st.files || []).push({ name: f.name, type: f.type, size: f.size, dataUrl, timestamp: getCurrentTimestamp() });
+				
+				// Intentar subir online (Drive via Apps Script) y registrar en Firestore
+				if (isOnline && WEBAPP_URL) {
+					try {
+						const up = await uploadPhotoOnline({ proveedor: PROVIDER_KEY, activo: it.activo, file: f, gps: lastGPS });
+						console.log('📤 Resultado upload:', up);
+						if (up?.success && up?.thumbnailUrl) {
+							(st.remoteUrls = st.remoteUrls || []).push(up.thumbnailUrl);
+							console.log('✅ Foto subida correctamente:', up.thumbnailUrl);
+						} else {
+							console.warn('❌ Error en upload:', up);
+						}
+					} catch (e) {
+						console.warn('No se pudo subir foto ahora, quedará local para sincronizar:', e);
+					}
+				}
 			}
 			
+			st.validations = validatePhotos(st.files);
+			// No guardar localmente, solo en memoria hasta enviar a revisión
 			states.set(it.id, st);
-			if (btnMedido) btnMedido.removeAttribute('disabled');
+			
+			const btn = document.getElementById(`markMedido-${it.id}`);
+			if (btn) btn.removeAttribute('disabled');
+			
 			refreshThumbs(it.id);
-		});
+			refreshGPS(it.id);
+			safeRender();
+		};
+		
+		// Ambos inputs usan la misma función
+		input?.addEventListener('change', processFiles);
+		cameraInput?.addEventListener('change', processFiles);
 
-		btnMedido?.addEventListener('click', async (e) => {
-			const currentBtn = e.currentTarget;
+		btnMedido?.addEventListener('click', async () => {
 			const st = states.get(it.id);
+			console.log('🔍 Estado actual:', st);
 			
-			if (!st.files || st.files.length === 0) { alert('Adjunta una foto antes de enviar.'); return; }
-			const valor_medicion = document.getElementById(`valorMedicion-${it.id}`)?.value?.trim() || '';
+			if (!st.files || st.files.length === 0) { 
+				alert('Debes adjuntar al menos una foto o video antes de enviar a revisión.'); 
+				return; 
+			}
+			if (!isOnline || !WEBAPP_URL) { 
+				alert('Sin conexión. No se puede sincronizar ahora.'); 
+				return; 
+			}
+			
+			const valorMedicionEl = document.getElementById(`valorMedicion-${it.id}`);
+			const valor_medicion = valorMedicionEl?.value?.trim() || '';
+			
+			// Validar formato de medición (pasando clasificación para determinar rango)
 			const validacion = validarMedicion(valor_medicion, it.clasificacion);
-			if (!validacion.valido) { alert(validacion.mensaje); return; }
-			
-			const fotosUrls = (st.remoteUrls || []).join(';');
-			if (!fotosUrls) { alert('⚠️ La foto no se subió a Drive. Intenta de nuevo.'); return; }
-			
-			// PROTECCIÓN ANTI DOBLE CLIC
-			currentBtn.disabled = true;
-			const textoOriginal = currentBtn.innerHTML;
-			currentBtn.innerHTML = '⏳ Enviando...';
+			if (!validacion.valido) {
+				alert(validacion.mensaje);
+				valorMedicionEl?.focus();
+				return;
+			}
 			
 			try {
+				const fotosUrls = (st.remoteUrls || []).join(';');
+				console.log('📸 URLs de fotos:', fotosUrls);
+				console.log('📸 Cantidad de remote URLs:', st.remoteUrls?.length || 0);
+				
+				if (!fotosUrls || fotosUrls.length === 0) {
+					alert('⚠️ Las fotos no se han subido correctamente a Drive. Intenta de nuevo.');
+					return;
+				}
+				
 				const payload = {
 					proveedor: PROVIDER_KEY,
 					activo: it.activo,
@@ -455,101 +1036,410 @@
 					fotos_cantidad: st.files.length,
 					fotos_uris: fotosUrls,
 					valor_medicion: valor_medicion,
-					gps_lat: st.gps?.length ? st.gps[0].lat : '',
-					gps_lng: st.gps?.length ? st.gps[0].lng : ''
+					notas_texto: (st.notes || []).map(n=>`${n.type}:${n.text}`).join(' | '),
+					gps_lat: st.gps?.length ? st.gps[st.gps.length-1].lat : '',
+					gps_lng: st.gps?.length ? st.gps[st.gps.length-1].lng : '',
+					gps_precision_m: st.gps?.length ? st.gps[st.gps.length-1].accuracy : '',
+					dispositivo: navigator.userAgent.substring(0,80),
+					version_app: 'advanced-1.0',
+					audit: [{
+						timestamp: getCurrentTimestamp(),
+						actor: 'proveedor',
+						action: 'ENVIADO_A_REVISION',
+						details: `${st.files.length} fotos`
+					}]
 				};
 				
+				console.log('📦 Payload a enviar:', payload);
+				
+				// Guardar en Firestore con estado pendiente_revision
 				await saveMeasurementToFirestore(payload);
+
 				st.estado = 'pendiente_revision';
 				st.valor_medicion = valor_medicion;
-				delete st.observacion_rechazo;
-				states.set(it.id, st);
-				alert('✅ Medición enviada correctamente.');
-				safeRender();
-			} catch(err) {
-				alert('Error al enviar: ' + err.message);
-				currentBtn.disabled = false;
-				currentBtn.innerHTML = textoOriginal;
+			// Limpiar observación de rechazo al reenviar
+			delete st.observacion_rechazo;
+			delete st.fecha_rechazo;
+			states.set(it.id, st);
+			alert('✅ Medición enviada a revisión correctamente.');
+			safeRender();
+			} catch(e) {
+				console.error('❌ Error completo:', e);
+				alert('Error al enviar a revisión: ' + (e.message || e));
 			}
 		});
 		
 		btnReset?.addEventListener('click', async () => {
-			if (prompt('PIN:') !== PIN_RESET) return;
+			const pin = prompt('Ingresa el PIN para reiniciar:');
+			if (pin !== PIN_RESET) {
+				alert('PIN incorrecto. No se puede reiniciar.');
+				return;
+			}
+			
+			if (!confirm('¿Estás seguro de que quieres reiniciar este activo? Se perderán todas las fotos adjuntas.')) {
+				return;
+			}
+			
 			const st = states.get(it.id);
-			st.estado = 'pendiente'; st.files = []; st.remoteUrls = []; delete st.valor_medicion; delete st.observacion_rechazo;
+			st.estado = 'pendiente';
+			st.files = [];
+			st.notes = [];
+			st.gps = [];
+			st.validations = {};
+			st.audit = []; // Limpiar historial local
+			st.remoteUrls = []; // Limpiar URLs remotas
+			delete st.valor_medicion;
+			delete st.observacion_rechazo;
+			delete st.fecha_rechazo;
 			states.set(it.id, st);
-			deleteMeasurementFromFirestore(PROVIDER_KEY, it.activo);
+			renderDetail(it, container);
 			safeRender();
+			// Eliminar en Firestore para reflejar en tiempo real
+			deleteMeasurementFromFirestore(PROVIDER_KEY, it.activo);
 		});
 	}
 
 	function refreshThumbs(itemId, isReadOnly = false) {
 		const thumbs = document.getElementById(`thumbs-${itemId}`);
 		if (!thumbs) return;
+		
 		const st = states.get(itemId);
+		const files = st?.files || [];
+		
 		thumbs.innerHTML = '';
-		(st?.files || []).forEach((f, idx) => {
+		for (const [idx, f] of files.entries()) {
 			const el = document.createElement('div');
 			el.className = 'thumb';
-			el.innerHTML = `<img src="${f.dataUrl}" />`;
+			
+			if ((f.type || '').startsWith('video/')) {
+				el.innerHTML = `<video src="${f.dataUrl}" muted></video>`;
+			} else {
+				el.innerHTML = `<img src="${f.dataUrl}" alt="adjunto" />`;
+			}
+			
+			const info = document.createElement('div');
+			info.className = 'thumb-info';
+			info.textContent = f.name.substring(0, 10) + '...';
+			el.appendChild(info);
+			
 			if (!isReadOnly) {
 				const del = document.createElement('button');
-				del.textContent = '×'; del.className = 'danger';
-				del.style = 'position:absolute;top:2px;right:2px;';
-				del.onclick = () => { st.files.splice(idx, 1); states.set(itemId, st); refreshThumbs(itemId); document.getElementById(`markMedido-${itemId}`)?.setAttribute('disabled','true'); };
+				del.textContent = '×';
+				del.className = 'danger';
+				del.style.position = 'absolute';
+				del.style.top = '2px';
+				del.style.right = '2px';
+				del.onclick = async () => {
+				st.files.splice(idx, 1);
+				st.validations = validatePhotos(st.files);
+				states.set(itemId, st);
+				refreshThumbs(itemId);
+				safeRender();
+				};
 				el.appendChild(del);
 			}
 			thumbs.appendChild(el);
-		});
+		}
 	}
+
+	function refreshNotes(itemId) {
+		const notesEl = document.getElementById(`notes-${itemId}`);
+		if (!notesEl) return;
+		
+		const st = states.get(itemId);
+		const notes = st?.notes || [];
+		
+		notesEl.innerHTML = '';
+		for (const note of notes) {
+			const div = document.createElement('div');
+			div.className = 'note-item';
+			div.innerHTML = `
+				<div><strong>${note.type}:</strong> ${note.text}</div>
+				<div class="note-timestamp">${formatDate(note.timestamp)}</div>
+			`;
+			notesEl.appendChild(div);
+		}
+	}
+
+	function refreshGPS(itemId) {
+		const gpsEl = document.getElementById(`gps-coords-${itemId}`);
+		if (!gpsEl) return;
+		
+		const st = states.get(itemId);
+		const gps = st?.gps || [];
+		
+		if (gps.length > 0) {
+			const last = gps[gps.length - 1];
+			gpsEl.innerHTML = `
+				<span class="gps-coords">${last.lat.toFixed(6)}, ${last.lng.toFixed(6)}</span>
+				<span class="small">(Precisión: ±${Math.round(last.accuracy)}m)</span>
+			`;
+		} else {
+			gpsEl.textContent = 'No capturada';
+		}
+	}
+
+	function refreshAudit(itemId) {
+		const auditEl = document.getElementById(`audit-${itemId}`);
+		if (!auditEl) return;
+		
+		const st = states.get(itemId);
+		const audit = st?.audit || [];
+		
+		auditEl.innerHTML = '';
+		for (const entry of audit.slice(-5)) { // Últimos 5
+			const div = document.createElement('div');
+			div.className = 'small';
+			div.textContent = `${formatDate(entry.timestamp)} - ${entry.action} ${entry.details ? ': ' + entry.details : ''}`;
+			auditEl.appendChild(div);
+		}
+	}
+
+	// Funciones globales
+	window.capturarFoto = function(itemId) {
+		const input = document.getElementById(`cameraInput-${itemId}`);
+		if (input) {
+			input.click();
+			// El evento change se maneja igual que fileInput
+		}
+	};
+	
+	window.captureGPS = async function(itemId) {
+		try {
+			const location = await getCurrentLocation();
+		const st = states.get(itemId) || { estado: 'pendiente', files: [], notes: [], gps: [], audit: [], validations: {} };
+		st.gps = st.gps || [];
+		st.gps.push(location);
+		states.set(itemId, st);
+		refreshGPS(itemId);
+		} catch (error) {
+			alert('Error al capturar GPS: ' + error.message);
+		}
+	};
+
+	window.closeModal = function(modalId) {
+		document.getElementById(modalId).style.display = 'none';
+	};
+
+	window.saveNote = function() {
+		if (!currentNoteItem) return;
+		
+		const type = document.getElementById('noteType').value;
+		const text = document.getElementById('noteText').value.trim();
+		
+		if (!text) {
+			alert('Por favor ingresa un comentario');
+			return;
+		}
+		
+		const st = states.get(currentNoteItem);
+		st.notes = st.notes || [];
+		st.notes.push({
+			type: type,
+			text: text,
+			timestamp: getCurrentTimestamp()
+		});
+		
+		saveState({ id: currentNoteItem, provider: PROVIDER_KEY, ...st });
+		addAuditLog(currentNoteItem, 'NOTA_AGREGADA', `${type}: ${text.substring(0, 30)}...`);
+		
+		closeModal('notesModal');
+		document.getElementById('noteText').value = '';
+		refreshNotes(currentNoteItem);
+		safeRender();
+	};
 
 	async function postForm(url, payload) {
 		const fd = new FormData();
-		for (const [k,v] of Object.entries(payload)) fd.append(k, String(v||''));
+		for (const [k,v] of Object.entries(payload)) {
+			fd.append(k, v == null ? '' : String(v));
+		}
+		console.log('📤 Enviando a Apps Script:', payload);
 		const resp = await fetch(url, { method: 'POST', body: fd, mode: 'cors' });
-		return JSON.parse(await resp.text());
+		console.log('📥 Respuesta HTTP:', resp.status, resp.statusText);
+		
+		try {
+			const text = await resp.text();
+			console.log('📥 Texto respuesta:', text);
+			const parsed = JSON.parse(text);
+			console.log('📥 JSON parseado:', parsed);
+			return parsed;
+		} catch (e) {
+			console.warn('❌ Error parseando respuesta:', e);
+			return { success: false, error: 'Error parseando respuesta del servidor' };
+		}
 	}
 
+	async function uploadPhotoOnline({ proveedor, activo, file, gps }) {
+		if (!isOnline) throw new Error('Sin conexión: no se puede subir foto');
+		const base64 = await new Promise(res => {
+			const r = new FileReader();
+			r.onload = () => res(String(r.result).split(',')[1]);
+			r.readAsDataURL(file);
+		});
+		const result = await postForm(WEBAPP_URL, {
+			action: 'uploadPhoto', proveedor, activo,
+			fileName: file.name, mimeType: file.type, base64Data: base64,
+			gps_lat: gps?.lat ?? '', gps_lng: gps?.lng ?? '', device: navigator.userAgent
+		});
+		console.log('📤 Respuesta del Apps Script:', result);
+		return result;
+	}
+
+	// Event listeners
 	listEl.addEventListener('click', (ev) => {
 		const btn = ev.target.closest('button');
 		if (!btn) return;
-		if (btn.dataset.action === 'ver') {
-			selectedId = selectedId === btn.dataset.id ? null : btn.dataset.id;
+		
+		const id = btn.dataset.id;
+		const action = btn.dataset.action;
+		const it = items.find(x => x.id === id);
+		if (!it) return;
+		
+		if (action === 'ver') {
+			if (selectedId === id) {
+				selectedId = null;
+			} else {
+				selectedId = id;
+			}
 			safeRender();
+		} else if (action === 'note') {
+			currentNoteItem = id;
+			document.getElementById('notesModal').style.display = 'block';
 		}
 	});
 
-	document.getElementById('q').addEventListener('input', safeRender);
-	document.getElementById('filterClasif').addEventListener('change', safeRender);
-	document.getElementById('filterEstado').addEventListener('change', safeRender);
-
-	function subscribeRealtime() {
-		if (!authReady) { setTimeout(subscribeRealtime, 500); return; }
-		fbDb.collection('mediciones').where('proveedor', '==', PROVIDER_KEY)
-			.onSnapshot(snap => {
-				snap.docChanges().forEach(change => {
-					const data = change.doc.data() || {};
-					const docId = change.doc.id;
-					let localId = states.has(docId) || items.find(x => x.id === docId) ? docId : null;
-					if (!localId) return;
-					
-					const st = states.get(localId) || { estado: 'pendiente', files: [] };
-					if (change.type === 'removed') { states.delete(localId); return; }
-					
-					st.estado = data.estado || st.estado;
-					if (data.estado === 'pendiente' && data.observacion_rechazo) st.observacion_rechazo = data.observacion_rechazo;
-					else delete st.observacion_rechazo;
-					
-					states.set(localId, st);
-				});
-				safeRender();
-			});
-	}
-
-	(async function init() {
-		ALL_CLASSES.forEach(c => { const o = document.createElement('option'); o.value = c; o.textContent = c; document.getElementById('filterClasif').appendChild(o); });
-		subscribeRealtime();
+	q.addEventListener('input', safeRender);
+	clearSearch.addEventListener('click', () => {
+		q.value = '';
 		safeRender();
+	});
+	filterClasif.addEventListener('change', safeRender);
+	filterEstado.addEventListener('change', safeRender);
+	
+	// Listener para real-time de Firestore
+	let unsubscribe = null;
+	function subscribeRealtime() {
+		if (!authReady) {
+			setTimeout(subscribeRealtime, 500);
+			return;
+		}
+
+		// Cancelar listener anterior si existe
+		if (unsubscribe) {
+			try { unsubscribe(); } catch (e) { console.warn('Error cancelando listener', e); }
+		}
+
+		console.log('🔔 Iniciando listener de Firestore para:', PROVIDER_KEY);
+
+		try {
+			unsubscribe = fbDb.collection('mediciones')
+				.where('proveedor', '==', PROVIDER_KEY)
+				.onSnapshot(
+					{ includeMetadataChanges: false },
+					snap => {
+						console.log(`🔄 Cambios recibidos: ${snap.docChanges().length}`);
+						snap.docChanges().forEach(change => {
+							const doc = change.doc;
+							const data = doc.data() || {};
+							const docId = doc.id; // formato: proveedor::activo
+							// Búsqueda robusta del item local
+							let localId = null;
+							if (states.has(docId) || items.find(x => x.id === docId)) {
+								localId = docId;
+							} else {
+								const activoRemote = String(data.activo || '').trim().toLowerCase().replace(/\s+/g,' ');
+								const found = items.find(x => String(x.activo || '').trim().toLowerCase().replace(/\s+/g,' ') === activoRemote);
+								if (found) localId = found.id;
+								else {
+									const suf = '::' + String(data.activo || '').trim();
+									const found2 = items.find(x => x.id && x.id.endsWith(suf));
+									if (found2) localId = found2.id;
+								}
+							}
+							if (!localId) {
+								console.warn('Firestore change for unknown item (fallback failed):', docId, data.activo);
+								return;
+							}
+
+							const st = states.get(localId) || { estado: 'pendiente', files: [], notes: [], gps: [], validations: {}, remoteUrls: [] };
+
+							if (change.type === 'removed') {
+								states.delete(localId);
+								return;
+							}
+
+							st.estado = data.estado || st.estado;
+							if (data.fotos_uris) {
+								const urls = Array.isArray(data.fotos_uris) ? data.fotos_uris : String(data.fotos_uris).split(';').filter(Boolean);
+								st.remoteUrls = urls;
+							}
+
+							if (data.estado === 'pendiente' && data.observacion_rechazo) {
+								st.observacion_rechazo = data.observacion_rechazo;
+								st.fecha_rechazo = data.fecha_rechazo;
+							} else if (data.estado === 'medido' || data.estado === 'pendiente_revision') {
+								delete st.observacion_rechazo;
+								delete st.fecha_rechazo;
+							}
+
+							states.set(localId, st);
+						});
+						safeRender();
+						lastUpdate.textContent = formatDate(getCurrentTimestamp());
+					},
+					err => {
+						console.error('❌ Error en listener de Firestore:', err);
+						connectionStatus.textContent = '🔴 Error de conexión';
+						showError('Error de conexión con Firebase. Recargando...');
+						setTimeout(() => {
+							if (navigator.onLine) {
+								window.location.reload();
+							}
+						}, 5000);
+					}
+				);
+		} catch (e) {
+			console.error('❌ Error configurando listener:', e);
+			showError('Error al configurar tiempo real.');
+		}
+	}
+	dateFrom.addEventListener('change', safeRender);
+	dateTo.addEventListener('change', safeRender);
+	exportBtn.addEventListener('click', exportToCSV);
+
+	// Monitoreo de conexión
+	window.addEventListener('online', () => {
+		isOnline = true;
+		connectionStatus.textContent = '🟢 Conectado';
+	});
+	
+	window.addEventListener('offline', () => {
+		isOnline = false;
+		connectionStatus.textContent = '🔴 Sin conexión';
+	});
+
+	// Limpiar listener al cerrar
+	window.addEventListener('beforeunload', () => {
+		if (unsubscribe) {
+			try { unsubscribe(); } catch (e) {}
+		}
+	});
+	
+	// Inicialización - 100% Firebase, sin IndexedDB
+	(async function init() {
+		try {
+			hydrateFilters();
+			// Iniciar listener de Firebase en tiempo real
+			subscribeRealtime();
+			safeRender();
+			lastUpdate.textContent = formatDate(getCurrentTimestamp());
+			if (!INITIAL_ITEMS || INITIAL_ITEMS.length === 0) {
+				showError('No se encontraron activos en este proveedor. Verifica el Excel.');
+			}
+		} catch (e) {
+			showError(e.message || e);
+		}
 	})();
 	</script>
 </body>
